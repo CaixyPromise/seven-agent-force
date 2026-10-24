@@ -1,0 +1,3 @@
+go 1.26.10
+
+use ./seven-agent-force-server

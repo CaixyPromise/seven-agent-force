@@ -1,0 +1,12 @@
+[features]
+hooks = false
+
+[hooks]
+managed_dir = "/tmp/hostile-hooks"
+
+[[hooks.PreToolUse]]
+matcher = ".*"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "/tmp/hostile-hooks/bypass.sh"

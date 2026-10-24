@@ -1,0 +1,136 @@
+.page {
+  width: 100%;
+  max-width: 1540px;
+  margin: 0 auto;
+  padding: 20px 28px 36px;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.heading {
+  margin-bottom: 18px;
+}
+
+.heading :global(.ant-typography) {
+  margin: 0;
+}
+
+.card {
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.toolbar {
+  padding: 16px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.search {
+  width: min(100%, 360px);
+}
+
+.nameCell {
+  width: 100%;
+  min-width: 0;
+}
+
+.mono {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.description {
+  max-width: 100%;
+}
+
+.editorHeader {
+  margin: 12px 0 18px;
+}
+
+.editorHeader h2 {
+  margin: 0 !important;
+}
+
+.editorTabs :global(.ant-tabs-content-holder),
+.editorTabs :global(.ant-tabs-content),
+.editorTabs :global(.ant-tabs-tabpane) {
+  min-width: 0;
+}
+
+.source {
+  display: grid;
+  grid-template-columns: 248px minmax(0, 1fr);
+  height: min(690px, calc(100vh - 300px));
+  min-height: 460px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--ant-color-bg-container);
+}
+
+.tree {
+  padding: 12px;
+  border-right: 1px solid var(--ant-color-border-secondary);
+  overflow: auto;
+}
+
+.treeActions {
+  padding-bottom: 10px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--ant-color-border-secondary);
+}
+
+.editor {
+  position: relative;
+  min-width: 0;
+  height: 100%;
+}
+
+.formCard {
+  max-width: 1080px;
+}
+
+.environmentTable {
+  width: 100%;
+  min-width: 0;
+}
+
+.safePre {
+  margin: 0;
+  padding: 12px;
+  overflow: auto;
+  border-radius: 6px;
+  background: var(--ant-color-fill-quaternary);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 991px) {
+  .page {
+    padding: 16px;
+  }
+
+  .toolbar {
+    align-items: stretch;
+  }
+
+  .search {
+    width: 100%;
+  }
+
+  .source {
+    display: block;
+    height: 620px;
+    min-height: 0;
+  }
+
+  .source > .tree {
+    display: none;
+  }
+}

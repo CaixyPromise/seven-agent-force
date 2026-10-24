@@ -1,0 +1,16 @@
+{
+  "role": "AGENT",
+  "scenario": "NETWORK_TOOL_CALL",
+  "nativeToolCallId": "fake-native-network-1",
+  "localToolCallKey": "fake-network-1",
+  "purpose": "Install locked dependencies",
+  "command": "pnpm install --frozen-lockfile",
+  "cwd": ".",
+  "targets": [
+    {
+      "host": "registry.npmjs.org",
+      "protocol": "https",
+      "port": 443
+    }
+  ]
+}

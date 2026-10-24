@@ -1,0 +1,7 @@
+{
+  "name": "seven-worker-image-smoke",
+  "private": true,
+  "scripts": {
+    "test": "node --test smoke.test.mjs"
+  }
+}

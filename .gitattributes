@@ -1,0 +1,2 @@
+# Preserve upstream legal evidence exactly; hashes refer to original bytes.
+third_party/licenses/*.txt -text -whitespace

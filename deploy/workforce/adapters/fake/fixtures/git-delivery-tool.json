@@ -1,0 +1,7 @@
+{
+  "role": "AGENT",
+  "scenario": "GIT_DELIVERY_TOOL_CALL",
+  "nativeToolCallId": "fake-native-git-delivery-1",
+  "localToolCallKey": "fake-git-delivery-1",
+  "summary": "Pagination boundary fix and regression checks are complete."
+}

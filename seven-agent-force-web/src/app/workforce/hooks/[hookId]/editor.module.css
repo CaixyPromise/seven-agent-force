@@ -1,0 +1,11 @@
+.page { width: 100%; max-width: 1540px; margin: 0 auto; padding: 20px 28px 36px; min-width: 0; }
+.header { margin: 12px 0 18px; }
+.header h2 { margin: 0 !important; }
+.tabs :global(.ant-tabs-content-holder), .tabs :global(.ant-tabs-content), .tabs :global(.ant-tabs-tabpane) { min-width: 0; }
+.source { display: grid; grid-template-columns: 248px minmax(0, 1fr); height: min(690px, calc(100vh - 300px)); min-height: 460px; border: 1px solid #e8e8e8; border-radius: 8px; overflow: hidden; background: white; }
+.tree { padding: 12px; border-right: 1px solid #e8e8e8; overflow: auto; }
+.treeActions { padding-bottom: 10px; margin-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+.editor { position: relative; min-width: 0; height: 100%; }
+.formCard { max-width: 900px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+@media (max-width: 991px) { .page { padding: 16px; } .source { display: block; height: 620px; min-height: 0; } .source > .tree { display: none; } }

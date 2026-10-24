@@ -1,0 +1,13 @@
+Seven Agent Force
+
+Derived from Seven Framework.
+Copyright 2026 CaixyPromise
+
+This product includes third-party software distributed under its respective
+licenses. Release archives include an SPDX software bill of materials that
+identifies the Go and Web dependencies used to build the product.
+
+Third-party license, copyright and source-availability notices are provided in
+THIRD_PARTY_NOTICES.md and third_party/licenses/. The corresponding source for
+the bundled MPL-2.0 MySQL driver is included in release archives under
+third_party/sources/. See third_party/licenses.json for exact versions and hashes.

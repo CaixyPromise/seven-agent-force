@@ -1,0 +1,887 @@
+.page,
+.composePage {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pageHeader,
+.editorHeader {
+  min-width: 0;
+  padding: 4px 2px 2px;
+}
+
+.pageHeader h2,
+.editorHeader h2,
+.composeHeader h2,
+.projectHero h2,
+.projectCard h4,
+.sectionHeading h4,
+.summaryCard h4 {
+  margin: 0;
+}
+
+.projectListCard,
+.formSection,
+.summaryCard,
+.tabCard,
+.ruleCard,
+.composerCard {
+  border-color: rgba(5, 5, 5, 0.08);
+  box-shadow: 0 8px 28px rgba(31, 35, 41, 0.035);
+}
+
+.projectListCard {
+  overflow: hidden;
+}
+
+.projectListCard :global(.ant-card-body) {
+  padding: 0;
+}
+
+.listToolbar {
+  padding: 14px 18px;
+  border-bottom: 1px solid rgba(5, 5, 5, 0.06);
+}
+
+.listTitle {
+  color: rgba(0, 0, 0, 0.88);
+  font-size: 16px;
+}
+
+.searchGroup {
+  min-width: min(100%, 320px);
+}
+
+.searchGroup :global(.ant-input-search) {
+  width: min(100%, 280px);
+}
+
+.projectGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 16px;
+}
+
+.projectCard {
+  display: flex;
+  min-width: 0;
+  min-height: 198px;
+  padding: 17px;
+  flex-direction: column;
+  gap: 12px;
+  color: inherit;
+  text-align: left;
+  border: 1px solid rgba(5, 5, 5, 0.08);
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  transition: border-color 160ms ease-out, box-shadow 160ms ease-out, transform 160ms ease-out;
+}
+
+.projectCard:hover,
+.projectCard:focus-visible {
+  border-color: rgba(22, 119, 255, 0.36);
+  box-shadow: 0 14px 34px rgba(31, 35, 41, 0.08);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.projectCard:focus-visible {
+  box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.18), 0 14px 34px rgba(31, 35, 41, 0.08);
+}
+
+.projectIdentity,
+.heroIdentity,
+.heroCopy,
+.taskMain,
+.ruleCopy,
+.composeHeaderCopy {
+  min-width: 0;
+}
+
+.projectIdentity {
+  flex: 1;
+}
+
+.projectIcon,
+.ruleIcon {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  color: #1677ff;
+  background: #eef6ff;
+}
+
+.projectIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  font-size: 16px;
+}
+
+.projectDescription {
+  display: -webkit-box;
+  min-height: 22px;
+  margin-top: 7px;
+  overflow: hidden;
+  line-height: 22px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
+}
+
+.openIcon {
+  margin-top: 7px;
+  color: rgba(0, 0, 0, 0.32);
+}
+
+.projectSource {
+  min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f7f8fa;
+}
+
+.projectSource > :last-child {
+  min-width: 0;
+}
+
+.stackRow {
+  min-height: 24px;
+}
+
+.stackRow :global(.ant-tag),
+.projectCard :global(.ant-tag),
+.projectHero :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.projectStats {
+  margin-top: auto;
+  padding-top: 11px;
+  border-top: 1px solid rgba(5, 5, 5, 0.06);
+}
+
+.projectStats strong {
+  color: rgba(0, 0, 0, 0.82);
+}
+
+.projectSkeleton {
+  min-height: 198px;
+}
+
+.loadMore {
+  padding: 0 18px 18px;
+}
+
+.emptyState {
+  margin-block: 70px;
+}
+
+.projectForm {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.formGrid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 18px;
+  align-items: start;
+}
+
+.formMain {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.formSection :global(.ant-card-body) {
+  padding: 24px;
+}
+
+.sectionHeading {
+  width: 100%;
+  margin-bottom: 22px;
+}
+
+.kindPicker {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.kindPicker :global(.ant-radio-button-wrapper) {
+  height: 44px;
+  line-height: 42px;
+  text-align: center;
+}
+
+.flexField,
+.repositoryField {
+  min-width: 220px;
+  flex: 1;
+}
+
+.repositoryFields {
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f7f9fc;
+}
+
+.repositorySummary {
+  display: flex;
+  min-width: 0;
+  margin-bottom: 16px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.repositorySummaryMain {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.repositoryAddress {
+  overflow-wrap: anywhere;
+}
+
+.cloneUrlField {
+  margin-bottom: 18px !important;
+}
+
+.repositoryFields :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.refField {
+  width: 180px;
+}
+
+.replaceAction {
+  flex: none;
+}
+
+.inlineMeta {
+  display: block;
+  margin-top: 9px;
+  overflow-wrap: anywhere;
+}
+
+.ruleCollapse {
+  overflow: hidden;
+  border: 1px solid rgba(5, 5, 5, 0.08);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ruleCollapse :global(.ant-collapse-item:last-child),
+.ruleCollapse :global(.ant-collapse-item:last-child > .ant-collapse-header) {
+  border-radius: 0 0 12px 12px;
+}
+
+.ruleCollapse :global(.ant-collapse-header) {
+  min-height: 56px;
+  align-items: center !important;
+  padding-inline: 16px !important;
+  background: #fafbfc;
+}
+
+.ruleCollapse :global(.ant-collapse-content-box) {
+  padding: 18px 20px 4px !important;
+}
+
+.ruleLabel {
+  width: 100%;
+  padding-right: 8px;
+}
+
+.codeInput {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 13px;
+}
+
+.formAside {
+  position: sticky;
+  top: 20px;
+  min-width: 0;
+}
+
+.summaryCard {
+  border-color: rgba(22, 119, 255, 0.15);
+  background: linear-gradient(145deg, #fff 20%, #f5f9ff 100%);
+}
+
+.summaryCard h4 {
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.summaryList {
+  width: 100%;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(22, 119, 255, 0.1);
+}
+
+.summaryValue {
+  max-width: 160px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.formActions {
+  position: sticky;
+  z-index: 2;
+  bottom: 0;
+  margin-top: 18px;
+  padding: 14px 0 2px;
+  border-top: 1px solid rgba(5, 5, 5, 0.06);
+  background: rgba(246, 248, 251, 0.94);
+  backdrop-filter: blur(12px);
+}
+
+.projectHero {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid rgba(22, 119, 255, 0.12);
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fff 32%, #f5f9ff 100%);
+}
+
+.backButton {
+  flex: none;
+  margin-left: -8px;
+}
+
+.heroDescription {
+  max-width: 760px;
+  margin: 0 !important;
+  color: rgba(0, 0, 0, 0.58);
+}
+
+.heroStats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  margin-top: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(5, 5, 5, 0.06);
+  border-radius: 12px;
+  background: rgba(5, 5, 5, 0.06);
+}
+
+.metric {
+  display: flex;
+  min-width: 0;
+  padding: 13px 16px;
+  flex-direction: column;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.metric > :last-child {
+  overflow-wrap: anywhere;
+}
+
+.metricEmphasis {
+  color: #ad6800;
+}
+
+.projectTabs :global(.ant-tabs-nav) {
+  margin-bottom: 16px;
+}
+
+.projectTabs :global(.ant-tabs-tab) {
+  padding-inline: 4px;
+  font-weight: 600;
+}
+
+.taskList {
+  overflow: hidden;
+  border: 1px solid rgba(5, 5, 5, 0.08);
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 8px 28px rgba(31, 35, 41, 0.035);
+}
+
+.taskRow {
+  display: flex;
+  min-width: 0;
+  padding: 17px 20px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  color: inherit;
+  border-bottom: 1px solid rgba(5, 5, 5, 0.06);
+  transition: background-color 140ms ease-out;
+}
+
+.taskRow:last-child {
+  border-bottom: 0;
+}
+
+.taskRow:hover,
+.taskRow:focus-visible {
+  color: inherit;
+  background: #f8fbff;
+  outline: none;
+}
+
+.taskMain {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.taskSummary {
+  display: -webkit-box;
+  overflow: hidden;
+  line-height: 21px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.taskTime {
+  flex: none;
+  white-space: nowrap;
+}
+
+.detailGrid,
+.ruleGrid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.preservedText,
+.ruleValue {
+  margin: 0 !important;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.ruleCard {
+  min-height: 136px;
+}
+
+.ruleIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+}
+
+.composePage {
+  width: min(920px, 100%);
+  margin: 0 auto;
+}
+
+.composeHeader {
+  min-width: 0;
+  padding: 10px 2px 2px;
+}
+
+.composerCard :global(.ant-card-body) {
+  padding: 28px;
+}
+
+.promptLabel {
+  font-size: 20px;
+  font-weight: 650;
+  color: rgba(0, 0, 0, 0.88);
+}
+
+.goalInput {
+  padding: 16px;
+  border-radius: 12px;
+  font-size: 16px;
+  line-height: 1.65;
+  resize: none;
+}
+
+.runtimeSection {
+  display: grid;
+  gap: 12px;
+  margin: 2px 0 20px;
+}
+
+.timeLimitSection {
+  margin: 0 0 22px;
+  padding: 14px 16px 4px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 12px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.timeLimitChoice {
+  margin: 10px 0 8px;
+}
+
+.runtimeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.runtimeCard {
+  display: grid;
+  min-width: 0;
+  padding: 14px;
+  gap: 10px;
+  text-align: left;
+  color: inherit;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 12px;
+  background: var(--ant-color-bg-container);
+  cursor: pointer;
+  transition: border-color 140ms ease-out, box-shadow 140ms ease-out, background-color 140ms ease-out;
+}
+
+.runtimeCard:hover,
+.runtimeCard:focus-visible {
+  border-color: var(--ant-color-primary-border);
+  background: var(--ant-color-primary-bg);
+  outline: none;
+}
+
+.runtimeCardSelected {
+  border-color: var(--ant-color-primary);
+  background: var(--ant-color-primary-bg);
+  box-shadow: 0 0 0 2px var(--ant-color-primary-border-secondary);
+}
+
+.runtimeIdentity {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.runtimeIdentity > * {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runtimeCapabilities :global(.ant-tag) {
+  margin-inline-end: 0;
+}
+
+.runtimeWorkers {
+  display: grid;
+  gap: 5px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.runtimeWorkers > * {
+  min-width: 0;
+}
+
+.runtimeWorkers :global(.ant-typography) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runtimeFooter {
+  padding-top: 2px;
+}
+
+.runtimeDetails {
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--ant-color-border-secondary);
+}
+
+.runtimeDetails summary {
+  width: max-content;
+  color: var(--ant-color-primary);
+  cursor: pointer;
+}
+
+.runtimeDetails dl {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+}
+
+.runtimeDetails dl > div {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.runtimeDetails dt {
+  color: var(--ant-color-text-tertiary);
+}
+
+.runtimeDetails dd {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ant-color-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runtimeEmpty {
+  padding: 20px;
+  text-align: center;
+  color: var(--ant-color-text-secondary);
+  border: 1px dashed var(--ant-color-border);
+  border-radius: 10px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+.composeOptions {
+  margin: 4px -12px 2px;
+  border-top: 1px solid rgba(5, 5, 5, 0.06);
+}
+
+.referenceRow {
+  min-width: 0;
+  margin: -2px 0 12px;
+}
+
+.referenceRow :global(.ant-tag) {
+  max-width: min(100%, 320px);
+  margin-inline-end: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.composeOptions :global(.ant-collapse-header) {
+  color: rgba(0, 0, 0, 0.58) !important;
+}
+
+.supplementCheck {
+  margin: 0 0 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: #f7f9fc;
+}
+
+.deliveryOverrides :global(.ant-form-item) {
+  margin-bottom: 8px;
+}
+
+.composerFooter {
+  margin: 4px -4px -4px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(5, 5, 5, 0.06);
+}
+
+@container (max-width: 860px) {
+  .formGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formAside {
+    position: static;
+    order: -1;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .taskRow:hover {
+    background: #f8fbff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .projectCard,
+  .taskRow,
+  .runtimeCard,
+  .formActions {
+    transition: none;
+    scroll-behavior: auto;
+  }
+
+  .projectCard:hover {
+    transform: none;
+  }
+}
+
+.hookOrderList {
+  display: grid;
+  gap: 8px;
+}
+
+.hookOrderItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--ant-color-border-secondary);
+  border-radius: 10px;
+  background: var(--ant-color-bg-container);
+}
+
+.hookDragHandle {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  color: var(--ant-color-text-tertiary);
+  background: transparent;
+  cursor: grab;
+}
+
+.hookDragHandle:hover,
+.hookDragHandle:focus-visible {
+  color: var(--ant-color-primary);
+  background: var(--ant-color-fill-tertiary);
+  outline: none;
+}
+
+.hookDragHandle:active {
+  cursor: grabbing;
+}
+
+.hookOrderContent {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+
+.inheritedHooks {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--ant-color-fill-quaternary);
+}
+
+@media (max-width: 900px) {
+  .projectGrid,
+  .detailGrid,
+  .ruleGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .fullWidth {
+    grid-column: auto;
+  }
+
+  .heroStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .page,
+  .composePage {
+    gap: 14px;
+  }
+
+  .pageHeader,
+  .editorHeader,
+  .composeHeader {
+    align-items: flex-start !important;
+  }
+
+  .listToolbar,
+  .projectHero,
+  .composerCard :global(.ant-card-body),
+  .formSection :global(.ant-card-body) {
+    padding: 16px;
+  }
+
+  .searchGroup,
+  .searchGroup :global(.ant-input-search) {
+    width: 100%;
+  }
+
+  .projectGrid {
+    gap: 12px;
+    padding: 12px;
+  }
+
+  .projectCard {
+    min-height: 0;
+    padding: 16px;
+  }
+
+  .projectStats,
+  .taskRow,
+  .composerFooter,
+  .repositorySummary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .taskTime {
+    padding-left: 0;
+  }
+
+  .heroIdentity {
+    width: 100%;
+  }
+
+  .heroStats {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .kindPicker {
+    grid-template-columns: 1fr;
+  }
+
+  .runtimeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .kindPicker :global(.ant-radio-button-wrapper) {
+    border-left-width: 1px;
+    border-radius: 6px;
+  }
+
+  .kindPicker :global(.ant-radio-button-wrapper + .ant-radio-button-wrapper::before) {
+    display: none;
+  }
+
+  .repositoryField,
+  .refField,
+  .flexField,
+  .replaceAction,
+  .replaceAction :global(.ant-btn) {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .formActions {
+    padding-bottom: max(8px, env(safe-area-inset-bottom));
+  }
+
+  .formActions :global(.ant-btn),
+  .composerFooter :global(.ant-space),
+  .composerFooter :global(.ant-btn) {
+    flex: 1;
+  }
+
+  .composerFooter :global(.ant-space) {
+    display: flex;
+    width: 100%;
+  }
+}

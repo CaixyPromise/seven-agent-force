@@ -1,0 +1,9 @@
+.page { width: 100%; max-width: 1480px; margin: 0 auto; padding: 28px 32px 48px; min-width: 0; }
+.heading { margin-bottom: 24px; }
+.heading h2 { margin: 0 !important; }
+.card { overflow: hidden; }
+.toolbar { padding: 16px; border-bottom: 1px solid #f0f0f0; }
+.search { width: min(360px, 100%); }
+.nameCell { min-width: 0; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+@media (max-width: 900px) { .page { padding: 20px 16px 36px; } .toolbar { align-items: stretch !important; } }

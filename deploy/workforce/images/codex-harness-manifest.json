@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "kind": "SevenAttemptImage",
+  "contract": "seven.worker-image/v1",
+  "role": "attempt",
+  "adapter": {
+    "id": "codex",
+    "version": "0.147.0",
+    "executable": "/opt/seven/adapter/entrypoint",
+    "args": [],
+    "binarySha256": "__ADAPTER_SHA256__",
+    "sourceSha256": "__ADAPTER_SOURCE_SHA256__",
+    "protocol": {"name": "seven.agent-adapter", "min": 1, "max": 1},
+    "transport": "stdio",
+    "capabilities": ["activity", "execution.interrupt", "execution.resume", "execution.start", "execution.suspend", "execution.suspended", "interaction.closed", "interaction.received", "interaction.request", "interaction.respond", "message.received", "tool.closed", "tool.received", "tool.request", "tool.result", "user.message"]
+  },
+  "metadata": {
+    "name": "Codex Node 22",
+    "version": "0.1.0-dev",
+    "buildRevision": "0000000",
+    "buildDate": "unknown",
+    "description": "Codex CLI with Node.js 22, pnpm and POSIX shell"
+  },
+  "runtime": {
+    "os": "linux",
+    "architectures": ["amd64", "arm64"],
+    "user": "10001:10001",
+    "entrypoint": ["/usr/local/bin/seven-worker-cli", "supervise"],
+    "probeCommand": ["/usr/local/bin/seven-worker-cli", "image", "probe", "--json"]
+  },
+  "supervisor": {
+    "executable": "/usr/local/bin/seven-worker-cli",
+    "version": "0.1.0-dev",
+    "buildRevision": "0000000",
+    "binarySha256": "__SUPERVISOR_SHA256__"
+  },
+  "protocols": {
+    "attemptSpec": {"min": 1, "max": 1},
+    "reviewInput": {"min": 1, "max": 1},
+    "reviewReport": {"min": 1, "max": 1},
+    "supervisorControl": {"min": 2, "max": 2},
+    "attemptControl": {"min": 1, "max": 1},
+    "managedHookEvent": {"min": 1, "max": 1},
+    "eventEnvelope": {"min": 1, "max": 1},
+    "completionProposal": {"min": 1, "max": 1},
+    "hookInput": {"min": 1, "max": 1},
+    "imageProbe": {"min": 1, "max": 1}
+  },
+  "harness": {
+    "type": "codex",
+    "adapter": "codex-app-server-v1",
+    "executable": "/usr/local/bin/codex",
+    "version": "0.147.0",
+    "binarySha256": "__HARNESS_SHA256__"
+  },
+  "reviewer": {
+    "harnessType": "codex",
+    "adapter": "codex-app-server-v1",
+    "reportSchema": "review-report/v1",
+    "providerIdentitySource": "task.model-credential",
+    "verdictSource": "codex-structured-output",
+    "taskVerdictSelection": "rejected",
+    "environmentVerdictSelection": "rejected",
+    "credentialMode": "no-inline-secret",
+    "outputSchemaPath": "/tmp/seven-review-report-v1.schema.json"
+  },
+  "executionKinds": ["AGENT_ATTEMPT", "REVIEW_RUN"],
+  "scheduling": {
+    "scope": "PRODUCTION",
+    "priority": 100,
+    "providerProtocols": [
+      "OPENAI"
+    ],
+    "environmentCapabilities": ["language.node", "package-manager.pnpm", "shell.posix"],
+    "hookEvents": ["attempt.prepare", "attempt.propose", "attempt.end", "codex.PreToolUse", "codex.PostToolUse"]
+  },
+  "hooks": {
+    "mode": "managed_only",
+    "requirementsPath": "/etc/codex/requirements.toml",
+    "managedDir": "/opt/seven-worker/assets/hooks",
+    "runner": "/usr/local/bin/seven-hook"
+  },
+  "resultProcessor": {
+    "pythonRuntimeIdentity": "__PYTHON_RUNTIME_IDENTITY__",
+    "bootstrapSha256": "__RESULT_BOOTSTRAP_SHA256__",
+    "sdkSha256": "__RESULT_SDK_SHA256__",
+    "moduleIndexSha256": "__RESULT_MODULE_INDEX_SHA256__",
+    "moduleRoots": ["/opt/seven-worker/result-runtime", "/opt/seven-worker/result-runtime/seven_workforce_runtime"]
+  },
+  "provider": {
+    "wireApi": "responses",
+    "localFacade": "http://127.0.0.1:8787/v1",
+    "reviewRelaySocket": "/provider/review-gateway.sock",
+    "proxyEndpoint": "unix:///provider/review-gateway.sock",
+    "credentialMode": "placeholder_only"
+  },
+  "filesystem": {
+    "taskRootTemplate": "/workspace/{task_id}",
+    "attemptRootTemplate": "/workspace/{task_id}/attempts/{attempt_id}",
+    "repo": {"pathTemplate": "/workspace/{task_id}/attempts/{attempt_id}/repo", "access": "read_write", "storage": "bind", "attemptPrivate": true},
+    "input": {"pathTemplate": "/workspace/{task_id}/input", "access": "read_only", "storage": "bind", "noexec": true, "attemptPrivate": false},
+    "output": {"pathTemplate": "/workspace/{task_id}/attempts/{attempt_id}/output", "access": "read_write", "storage": "bind", "attemptPrivate": true},
+    "state": {"pathTemplate": "/workspace/{task_id}/attempts/{attempt_id}/state", "access": "read_write", "storage": "bind", "attemptPrivate": true},
+    "runtime": {"pathTemplate": "/workspace/{task_id}/attempts/{attempt_id}/runtime", "access": "read_write", "storage": "bind", "attemptPrivate": true},
+    "temporary": {"pathTemplate": "/workspace/{task_id}/attempts/{attempt_id}/tmp", "access": "read_write", "storage": "bind", "attemptPrivate": true}
+  },
+  "reviewFilesystem": {
+    "resultRepository": {"path": "/result/repository.git", "access": "read_only", "storage": "bind"},
+    "scratch": {"path": "/scratch", "access": "read_write", "storage": "bind", "copyOnWrite": true},
+    "input": {"path": "/review/input.json", "access": "read_only", "storage": "bind", "noexec": true, "runScoped": true},
+    "report": {"path": "/report", "access": "read_write", "storage": "volume", "runScoped": true},
+    "providerRelay": {"path": "/provider/review-gateway.sock", "access": "read_only", "storage": "volume", "runScoped": true}
+  },
+  "assets": {"indexSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e8d927374313dfb5f8d2e65", "items": []},
+  "capabilities": ["harness.headless", "harness.codex", "harness.codex.review", "review.provider.gateway-client", "review.fixed-provider-identity", "review.task-verdict-rejected", "review.environment-verdict-rejected", "provider.responses", "provider.local-facade", "provider.gateway-client", "completion.proposal", "hooks.dispatch.v1", "hooks.runtime.shell", "hooks.runtime.node22", "hooks.codex.managed-only", "result-processor.python", "delivery.egress-gateway"]
+}

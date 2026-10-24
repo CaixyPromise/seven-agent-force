@@ -1,0 +1,579 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "seven.agent-adapter/v1",
+  "title": "AgentAdapter message envelope",
+  "description": "One UTF-8 JSON object per newline. Codecs additionally enforce direction, duplicate keys, UTF-8 byte limits (Go json.Marshal-compatible answers array <=16384 bytes), nonblank text, unique question/option keys and decimal-string entity IDs. Runtime enforces capability gates, lifecycle and keyed delivery. Validation grants no authority.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "method",
+    "key",
+    "payload"
+  ],
+  "properties": {
+    "protocol": {
+      "const": "seven.agent-adapter/v1"
+    },
+    "method": {
+      "enum": [
+        "initialize",
+        "ready",
+        "execution.start",
+        "execution.resume",
+        "execution.started",
+        "execution.interrupt",
+        "execution.finished",
+        "message",
+        "plan",
+        "activity",
+        "control.ack",
+        "error",
+        "interaction.request",
+        "interaction.respond",
+        "interaction.received",
+        "user.message",
+        "message.received",
+        "execution.suspend",
+        "execution.suspended",
+        "tool.catalog",
+        "tool.request",
+        "tool.result",
+        "tool.received",
+        "tool.closed"
+      ]
+    },
+    "key": {
+      "$ref": "#/$defs/key"
+    },
+    "replyTo": {
+      "$ref": "#/$defs/key"
+    },
+    "payload": {
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "key": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._:-]{1,128}$"
+    },
+    "nativeToolCallId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 512,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "option": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "label"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/questionKey"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        }
+      }
+    },
+    "question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "title",
+        "description",
+        "kind",
+        "required",
+        "allowFreeText",
+        "options"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/questionKey"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 512
+        },
+        "options": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/option"
+          }
+        },
+        "allowFreeText": {
+          "type": "boolean"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 4096
+        },
+        "kind": {
+          "enum": [
+            "SINGLE_CHOICE",
+            "MULTIPLE_CHOICE",
+            "TEXT"
+          ]
+        },
+        "required": {
+          "type": "boolean"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "TEXT"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "options": {
+                "maxItems": 0
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "options": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "questionKey",
+        "selectedOptionKeys",
+        "text"
+      ],
+      "properties": {
+        "questionKey": {
+          "$ref": "#/$defs/questionKey"
+        },
+        "text": {
+          "type": "string",
+          "maxLength": 16384
+        },
+        "selectedOptionKeys": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 8,
+          "items": {
+            "$ref": "#/$defs/questionKey"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "questionKey": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "description": "UTF-8 <=128 bytes, nonblank, no NUL, no surrounding whitespace; codec enforced."
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "method": {
+            "const": "interaction.request"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roundKey",
+              "interactionKey",
+              "questions"
+            ],
+            "properties": {
+              "roundKey": {
+                "$ref": "#/$defs/key"
+              },
+              "interactionKey": {
+                "$ref": "#/$defs/key"
+              },
+              "questions": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 3,
+                "items": {
+                  "$ref": "#/$defs/question"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "method": {
+            "const": "interaction.respond"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roundKey",
+              "interactionKey",
+              "answers",
+              "responseId"
+            ],
+            "properties": {
+              "roundKey": {
+                "$ref": "#/$defs/key"
+              },
+              "interactionKey": {
+                "$ref": "#/$defs/key"
+              },
+              "answers": {
+                "type": "array",
+                "minItems": 0,
+                "maxItems": 3,
+                "items": {
+                  "$ref": "#/$defs/answer"
+                }
+              },
+              "responseId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]{0,18}$",
+                "description": "Positive int64 decimal string, <=9223372036854775807; codec enforced."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "method": {
+            "const": "interaction.received"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roundKey",
+              "interactionKey",
+              "status",
+              "responseId"
+            ],
+            "properties": {
+              "roundKey": {
+                "$ref": "#/$defs/key"
+              },
+              "interactionKey": {
+                "$ref": "#/$defs/key"
+              },
+              "status": {
+                "enum": [
+                  "RECEIVED",
+                  "REJECTED",
+                  "UNKNOWN"
+                ]
+              },
+              "responseId": {
+                "type": "string",
+                "pattern": "^[1-9][0-9]{0,18}$",
+                "description": "Positive int64 decimal string, <=9223372036854775807; codec enforced."
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "method": {
+            "const": "user.message"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roundKey",
+              "messageKey",
+              "text"
+            ],
+            "properties": {
+              "roundKey": {
+                "$ref": "#/$defs/key"
+              },
+              "messageKey": {
+                "$ref": "#/$defs/key"
+              },
+              "text": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 16384
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "method": {
+            "const": "message.received"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roundKey",
+              "messageKey",
+              "status"
+            ],
+            "properties": {
+              "roundKey": {
+                "$ref": "#/$defs/key"
+              },
+              "messageKey": {
+                "$ref": "#/$defs/key"
+              },
+              "status": {
+                "enum": [
+                  "RECEIVED",
+                  "REJECTED",
+                  "UNKNOWN"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "method": {
+            "const": "execution.suspend"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roundKey"
+            ],
+            "properties": {
+              "roundKey": {
+                "$ref": "#/$defs/key"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "method": {
+            "const": "execution.suspended"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "roundKey",
+              "sessionReference"
+            ],
+            "properties": {
+              "roundKey": {
+                "$ref": "#/$defs/key"
+              },
+              "sessionReference": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 4096
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"method": {"const": "tool.catalog"}}},
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["roundKey", "toolNames", "catalogDigest"],
+            "properties": {
+              "roundKey": {"$ref": "#/$defs/key"},
+              "toolNames": {"type": "array", "maxItems": 16, "uniqueItems": true, "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{0,63}$"}},
+              "catalogDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"method": {"const": "tool.request"}}},
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["roundKey", "nativeToolCallId", "localToolCallKey", "toolName", "arguments", "argumentsDigest"],
+            "properties": {
+              "roundKey": {"$ref": "#/$defs/key"},
+              "nativeToolCallId": {"$ref": "#/$defs/nativeToolCallId"},
+              "localToolCallKey": {"$ref": "#/$defs/key"},
+              "toolName": {"enum": ["run_command_with_network_access", "request_git_delivery"]},
+              "arguments": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["purpose", "command", "cwd", "targets"],
+                    "properties": {
+                      "purpose": {"type": "string", "minLength": 1, "maxLength": 2048},
+                      "command": {"type": "string", "minLength": 1, "maxLength": 16384},
+                      "cwd": {"type": "string", "minLength": 1, "maxLength": 4096},
+                      "targets": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 8,
+                        "items": {
+                          "type": "object",
+                          "additionalProperties": false,
+                          "required": ["host", "protocol", "port"],
+                          "properties": {
+                            "host": {"type": "string", "minLength": 1, "maxLength": 253},
+                            "protocol": {"enum": ["http", "https"]},
+                            "port": {"type": "integer", "minimum": 1, "maximum": 65535}
+                          }
+                        }
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": ["summary"],
+                    "properties": {
+                      "summary": {"type": "string", "minLength": 1, "maxLength": 2048}
+                    }
+                  }
+                ]
+              },
+              "argumentsDigest": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"method": {"const": "tool.result"}}},
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["roundKey", "nativeToolCallId", "localToolCallKey", "operationId", "status", "exitCode", "summary", "output", "resultDigest", "reasonCode"],
+            "properties": {
+              "roundKey": {"$ref": "#/$defs/key"},
+              "nativeToolCallId": {"$ref": "#/$defs/nativeToolCallId"},
+              "localToolCallKey": {"$ref": "#/$defs/key"},
+              "operationId": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"},
+              "status": {"enum": ["SUCCEEDED", "FAILED", "SCHEDULED", "DENIED", "OUTCOME_UNKNOWN", "CANCELLED", "EXPIRED"]},
+              "exitCode": {"type": ["integer", "null"], "minimum": -2147483648, "maximum": 2147483647},
+              "summary": {"type": "string", "maxLength": 2048},
+              "output": {"type": "string", "maxLength": 65536},
+              "resultDigest": {"type": "string", "pattern": "^(?:|[0-9a-f]{64})$"},
+              "reasonCode": {"type": "string", "pattern": "^(?:|[A-Z][A-Z0-9_]{0,127})$"}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"method": {"const": "tool.received"}}},
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["roundKey", "localToolCallKey", "operationId", "status"],
+            "properties": {
+              "roundKey": {"$ref": "#/$defs/key"},
+              "localToolCallKey": {"$ref": "#/$defs/key"},
+              "operationId": {"type": "string", "pattern": "^[1-9][0-9]{0,18}$"},
+              "status": {"enum": ["RECEIVED", "REJECTED", "UNKNOWN"]}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"method": {"const": "tool.closed"}}},
+      "then": {
+        "properties": {
+          "payload": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["roundKey", "localToolCallKey", "reason"],
+            "properties": {
+              "roundKey": {"$ref": "#/$defs/key"},
+              "localToolCallKey": {"$ref": "#/$defs/key"},
+              "reason": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{0,127}$"}
+            }
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,18 @@
+@import './app/globals.css';
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  color: #1d1d1f;
+  background: #f5f7fb;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}

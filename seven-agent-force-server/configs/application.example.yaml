@@ -1,0 +1,129 @@
+seven:
+  name: seven-agent-force-server
+  env: dev
+
+server:
+  host: 127.0.0.1
+  port: 9277
+  contextPath: /api
+  # Provider Invocation Gateway accepts bounded Responses payloads up to 128 MiB.
+  # Individual controllers retain their own stricter limits.
+  maxRequestBodyBytes: 134217728
+
+logging:
+  level: info
+  format: json
+  request:
+    enabled: true
+    includeQuery: false
+  file:
+    enabled: false
+
+datasource:
+  driver: mysql
+  bootstrap:
+    enabled: false
+    mode: manual
+    versionTable: goose_db_version
+    changeOwner: goose
+    allowLegacySync: false
+  mysql:
+    enabled: false
+    dsn: ""
+  postgres:
+    enabled: false
+    dsn: ""
+
+cache:
+  enabled: false
+  redis:
+    enabled: false
+
+rabbitmq:
+  enabled: false
+  url: ""
+
+# Seven Agent Force is an authenticated module of this Framework server. The
+# host Worker uses the same configuration directory but remains a separate
+# process with Docker access. Keep credentials in application.yaml or
+# environment variables; never commit them here.
+workforce:
+  enabled: false
+  artifact:
+    endpoint: 127.0.0.1:9000
+    accessKey: ""
+    secretKey: ""
+    bucket: seven-workforce-artifacts
+    useTLS: false
+  worker:
+    id: local-worker-1
+    serverBaseURL: http://127.0.0.1:9277
+    tokenFile: /tmp/seven-workforce/seven-worker.token
+    maxActiveContainers: 1
+    dockerHost: ""
+    workspaceRoot: /tmp/seven-workforce/workspaces
+    # Optional trusted DNS-over-HTTPS resolver for hosts where system DNS
+    # returns VPN/TUN synthetic addresses. Tasks cannot override this value.
+    operationDNSOverHTTPSURL: ""
+    pollInterval: 1s
+  harness:
+    alias: fake-local-v1
+    image: ""
+    contract: seven.worker-image/v1
+    allowLocalImage: false
+  providerProxy:
+    image: seven-provider-proxy:0.1.0
+    imageDigest: sha256:replace-with-admitted-provider-proxy-digest
+    version: 0.1.1-mvp
+    controlRoot: /tmp/seven-workforce/provider-proxy
+  # One Framework-owned egress contract is projected into both the Probe and
+  # every Worker-created Provider Proxy. enabled=false is an operational escape
+  # hatch, but metadata/loopback/local-interface denial and redirect blocking
+  # remain active. allowFakeIP is rejected unless platform.mode is local.
+  providerSSRF:
+    enabled: true
+    allowedList:
+      # - hostname: provider.internal.example
+      #   cidrs: [10.20.0.0/16]
+      #   ports: [8443]
+      #   allowFakeIP: false
+      # Local acceptance may explicitly allow only 127.0.0.1/32 plus an exact
+      # fixture port with allowLoopback: true; production startup rejects it.
+    maxRequestBytes: 134217728
+    maxResponseHeaderBytes: 262144
+    requestTimeout: 10m
+    probeTimeout: 2m
+    responseHeaderTimeout: 2m
+    tlsHandshakeTimeout: 30s
+  managedHooks:
+    enabled: false
+    cacheRoot: /tmp/seven-workforce/hook-cache
+  reviewer:
+    enabled: false
+
+microservice:
+  enabled: false
+
+platform:
+  mode: local
+  # Optional trusted browser origin used by external notification actions.
+  # Production hub/node deployments must use HTTPS. It is never inferred from
+  # Host, Origin, forwarded headers, CORS, or the SSO login URL.
+  publicWebBaseUrl: ""
+
+docker:
+  enabled: false
+
+setup:
+  enabled: false
+
+login:
+  enabled: false
+
+storage:
+  location: uploads
+  staticPath: /static
+
+security:
+  originPatterns:
+    - http://127.0.0.1:5177

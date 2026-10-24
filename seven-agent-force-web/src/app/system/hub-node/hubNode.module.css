@@ -1,0 +1,136 @@
+.page {
+  min-height: 100%;
+  padding: 8px;
+  background: #f6f8fc;
+}
+
+.nodeLink {
+  height: auto;
+  padding: 0;
+  color: #155e75;
+  font-weight: 600;
+  text-align: left;
+}
+
+.registryControls {
+  display: grid;
+  grid-template-columns: minmax(240px, 420px) 150px 110px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding: 14px 16px;
+  border: 1px solid #e5e9ef;
+  border-radius: 6px;
+  background: #fff;
+}
+
+.centered {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+}
+
+.capabilityStrip {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 22px 0;
+  padding: 14px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabToolbar {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px auto;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.formGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 16px;
+}
+
+.sectionHeader {
+  margin: 18px 0 12px;
+  padding-top: 18px;
+  border-top: 1px solid #dfe4ea;
+}
+
+.sectionHeader div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sectionHeader span {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.repeatRow,
+.repeatRowCompact {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr 1.1fr 0.8fr 76px 68px 80px 36px;
+  align-items: end;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding: 10px;
+  border: 1px solid #e1e6ec;
+  border-radius: 6px;
+  background: #fafbfd;
+}
+
+.repeatRowCompact {
+  grid-template-columns: 1.1fr 1.7fr 90px 100px 36px;
+}
+
+.repeatRow :global(.ant-form-item),
+.repeatRowCompact :global(.ant-form-item) {
+  margin-bottom: 0;
+}
+
+.repeatRow :global(.ant-input-number),
+.repeatRowCompact :global(.ant-input-number) {
+  width: 100%;
+}
+
+.formActions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 20px;
+}
+
+.statusDescriptions {
+  margin-bottom: 8px;
+}
+
+@media (max-width: 900px) {
+  .repeatRow,
+  .repeatRowCompact {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .page {
+    padding: 0;
+  }
+
+  .tabToolbar,
+  .registryControls,
+  .formGrid,
+  .repeatRow,
+  .repeatRowCompact {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sectionHeader div,
+  .capabilityStrip {
+    flex-direction: column;
+    gap: 6px;
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "kind": "SevenProviderProxyImage",
+  "metadata": {
+    "name": "seven-provider-proxy",
+    "version": "0.2.4-provider-gateway",
+    "buildRevision": "0000000",
+    "buildDate": "unknown",
+    "binarySha256": "__PROXY_SHA256__",
+    "description": "Attempt- and ReviewRun-scoped fixed Framework Provider Invocation Gateway client"
+  },
+  "runtime": {
+    "os": "linux",
+    "architectures": ["amd64", "arm64"],
+    "user": "nonroot:nonroot",
+    "entrypoint": ["/usr/local/bin/seven-provider-proxy"]
+  },
+  "contract": "seven.worker-image/v1",
+  "role": "provider-proxy",
+  "executionKinds": ["AGENT_ATTEMPT", "REVIEW_RUN"],
+  "gatewayMode": "gateway-client",
+  "operations": ["responses.create", "responses.compact"],
+  "wire": ["application/json", "text/event-stream"],
+  "control": ["state", "adopt-owner", "renew-authority", "interrupt", "diagnostics"],
+  "secrets": {
+    "workerToken": "/run/seven/worker.token",
+    "providerKey": false,
+    "providerBaseUrl": false
+  },
+  "secretMounts": {
+    "attemptWorkerToken": "/run/seven/worker.token",
+    "reviewWorkerToken": "/run/seven/secrets/worker.token",
+    "reviewLease": "/run/seven/secrets/review.lease"
+  }
+}

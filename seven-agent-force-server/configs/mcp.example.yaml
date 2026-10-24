@@ -1,0 +1,24 @@
+server:
+  listenAddress: "127.0.0.1:18081"
+  endpointPath: "/mcp"
+  allowedOrigins: []
+  allowedHosts:
+    - "127.0.0.1:18081"
+    - "localhost:18081"
+  readTimeoutSeconds: 10
+  writeTimeoutSeconds: 60
+
+protocol:
+  version: "2026-07-28"
+  maxRequestBodyBytes: 262144
+  jsonResponseOnly: true
+
+openAPI:
+  baseURL: "http://127.0.0.1:18080/api/"
+  timeoutSeconds: 15
+
+limits:
+  ingressConcurrency: 64
+  globalConcurrency: 64
+  perApplicationConcurrency: 8
+  outputTextLimitBytes: 262144

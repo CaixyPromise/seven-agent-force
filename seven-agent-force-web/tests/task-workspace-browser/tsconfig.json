@@ -1,0 +1,1 @@
+{"extends":"../../tsconfig.app.json","compilerOptions":{"tsBuildInfoFile":"../../node_modules/.tmp/tsconfig.task-workspace-browser.tsbuildinfo"},"include":["../../src","../../config","./*.ts","./*.tsx"]}

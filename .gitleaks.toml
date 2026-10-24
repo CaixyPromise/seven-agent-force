@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Exact public chart field identifier, not a credential"
+regexes = ['''^p95LatencyMs$''']

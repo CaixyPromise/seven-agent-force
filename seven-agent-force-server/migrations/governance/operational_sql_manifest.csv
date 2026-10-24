@@ -1,0 +1,2 @@
+source_path,source_kind,dialect,table_contract,reason
+cmd/seven-worker/continuation_codex.go,command,sqlite-private,attempt-private,Codex continuation rewrites only the encrypted Attempt-private session SQLite index and never Framework storage

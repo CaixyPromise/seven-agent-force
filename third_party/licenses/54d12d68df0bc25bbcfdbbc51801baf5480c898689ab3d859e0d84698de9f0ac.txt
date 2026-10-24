@@ -1,0 +1,11 @@
+{
+  "name": "@tailwindcss/oxide-wasm32-wasi",
+  "version": "4.2.2",
+  "license": "MIT",
+  "author": null,
+  "repository": {
+    "url": "git+https://github.com/tailwindlabs/tailwindcss.git",
+    "type": "git",
+    "directory": "crates/node"
+  }
+}

@@ -1,0 +1,345 @@
+@layer theme, base, antd, components, utilities;
+
+@import "tailwindcss";
+
+@layer components {
+  .app-page-surface {
+    background: #f6f8fc;
+  }
+
+  .dashboard-surface {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .dashboard-surface:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 28px 64px -36px rgba(14, 116, 144, 0.28);
+    border-color: rgba(125, 211, 252, 0.28) !important;
+  }
+
+  .dashboard-action-card {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease,
+      background 180ms ease;
+  }
+
+  .dashboard-action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 24px 50px -34px rgba(14, 116, 144, 0.22);
+    border-color: rgba(56, 189, 248, 0.28) !important;
+    background: linear-gradient(180deg, rgba(224, 242, 254, 0.98) 0%, rgba(255, 255, 255, 1) 100%) !important;
+  }
+
+  .dashboard-log-row {
+    transition:
+      transform 180ms ease,
+      box-shadow 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease;
+  }
+
+  .dashboard-log-row:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 20px 40px -32px rgba(15, 23, 42, 0.22);
+    border-color: rgba(56, 189, 248, 0.24) !important;
+    background: rgba(248, 252, 255, 0.98) !important;
+  }
+
+  .challenge-otp-form-item .ant-form-item-control-input-content {
+    display: flex;
+    justify-content: center;
+  }
+
+  .challenge-otp-input {
+    display: inline-flex;
+    justify-content: center;
+  }
+
+  .challenge-otp-input input {
+    width: 52px !important;
+    height: 52px !important;
+    min-width: 52px !important;
+    text-align: center !important;
+    padding-inline: 0 !important;
+    line-height: 52px !important;
+  }
+
+  .ant-table-wrapper .ant-table-container,
+  .ant-table-wrapper .ant-table-content,
+  .ant-table-wrapper .ant-table-header,
+  .ant-table-wrapper .ant-table-body,
+  .ant-table-wrapper .ant-table,
+  .ant-table-wrapper .ant-spin-nested-loading,
+  .ant-table-wrapper .ant-spin-container,
+  .ant-table-wrapper .ant-table-cell,
+  .ant-table-wrapper .ant-table-thead > tr > th,
+  .ant-table-wrapper .ant-table-tbody > tr > td,
+  .ant-table-wrapper .ant-table-cell-fix-left,
+  .ant-table-wrapper .ant-table-cell-fix-right,
+  .ant-table-wrapper .ant-table-cell-fix-left-first::after,
+  .ant-table-wrapper .ant-table-cell-fix-right-first::after {
+    background: #ffffff !important;
+  }
+
+  .ant-table-wrapper .ant-table-ping-right .ant-table-cell-fix-right-first::after,
+  .ant-table-wrapper .ant-table-ping-left .ant-table-cell-fix-left-last::after {
+    box-shadow: none;
+  }
+
+  .ant-pro-table,
+  .ant-pro-table .ant-pro-card,
+  .ant-pro-table .ant-pro-card-body,
+  .ant-pro-table-search,
+  .ant-pro-table-search .ant-pro-card,
+  .ant-pro-table-search .ant-pro-card-body,
+  .ant-pro-card,
+  .ant-pro-card-body,
+  .ant-card,
+  .ant-card-body,
+  .ant-pagination,
+  .ant-pagination .ant-select-selector,
+  .ant-modal .ant-modal-content,
+  .ant-modal .ant-modal-header,
+  .ant-modal .ant-modal-body,
+  .ant-drawer .ant-drawer-content,
+  .ant-drawer .ant-drawer-header,
+  .ant-drawer .ant-drawer-body,
+  .ant-descriptions,
+  .ant-descriptions-view {
+    background: #ffffff !important;
+  }
+
+  .ant-pro-page-container,
+  .ant-pro-page-container-children-container,
+  .ant-pro-page-container-children-content {
+    background: #f6f8fc !important;
+  }
+
+  .ant-pro-table-search {
+    margin-bottom: 24px !important;
+  }
+
+  .ant-table-wrapper .ant-table-tbody > tr:hover > td.ant-table-cell-fix-left,
+  .ant-table-wrapper .ant-table-tbody > tr:hover > td.ant-table-cell-fix-right {
+    background: #f8fbff !important;
+  }
+}
+
+  .dashboard-page {
+    container-type: inline-size;
+    min-width: 0;
+    overflow-x: clip;
+  }
+
+  .dashboard-shell,
+  .dashboard-hero-grid,
+  .dashboard-dual-grid,
+  .dashboard-stats-grid,
+  .dashboard-actions-grid,
+  .dashboard-security-grid,
+  .dashboard-ops-row,
+  .dashboard-surface,
+  .dashboard-log-row {
+    min-width: 0;
+  }
+
+  .dashboard-shell {
+    width: 100%;
+    row-gap: 22px;
+  }
+
+  .dashboard-surface,
+  .dashboard-log-row {
+    overflow-wrap: anywhere;
+  }
+
+  /* Keep the configuration management split view inside the space left below
+   * the tab bar. The list is the scrollable region; its pagination footer is
+   * never part of an overflow-clipped fixed-height calculation. */
+  .config-manage-tabs {
+    display: flex;
+    flex: 1 1 auto;
+    min-height: 0;
+    flex-direction: column;
+  }
+
+  .config-manage-tabs > .ant-tabs-nav {
+    flex: 0 0 auto;
+  }
+
+  .config-manage-tabs > .ant-tabs-content-holder,
+  .config-manage-tabs > .ant-tabs-content-holder > .ant-tabs-content,
+  .config-manage-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane {
+    min-height: 0;
+  }
+
+  .config-manage-tabs > .ant-tabs-content-holder {
+    flex: 1 1 auto;
+    overflow: auto;
+  }
+
+  .config-manage-tabs > .ant-tabs-content-holder > .ant-tabs-content,
+  .config-manage-tabs > .ant-tabs-content-holder > .ant-tabs-content > .ant-tabs-tabpane-active,
+  .config-manage-workspace {
+    height: 100%;
+  }
+
+  /*
+   * ProLayout's sider consumes part of the viewport. Use the available content
+   * width, rather than the full browser width, so dashboard grids collapse
+   * before a side card can push the page horizontally at browser zoom.
+   */
+  @container (max-width: 1160px) {
+    .dashboard-hero-grid,
+    .dashboard-dual-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  @container (max-width: 920px) {
+    .dashboard-stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+
+  @container (max-width: 760px) {
+    .dashboard-page {
+      padding: 8px 18px 28px !important;
+    }
+
+    .dashboard-hero {
+      padding: 26px !important;
+      border-radius: 28px !important;
+    }
+
+    .dashboard-actions-grid,
+    .dashboard-security-grid,
+    .dashboard-ops-row {
+      grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-hero-actions {
+      gap: 12px !important;
+      align-items: stretch !important;
+    }
+
+    .dashboard-hero-actions > * {
+      width: 100%;
+    }
+
+    .dashboard-user-pill {
+      justify-content: flex-start;
+    }
+  }
+
+  @container (max-width: 560px) {
+    .dashboard-page {
+      padding: 6px 12px 22px !important;
+    }
+
+    .dashboard-hero {
+      padding: 18px !important;
+      border-radius: 22px !important;
+    }
+
+    .dashboard-stats-grid,
+    .dashboard-security-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-ops-row {
+      gap: 10px !important;
+    }
+
+    .dashboard-ops-row > :last-child {
+      text-align: left !important;
+    }
+  }
+
+  @media (max-width: 1280px) {
+    .dashboard-hero-grid,
+    .dashboard-dual-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    .dashboard-page {
+      padding: 8px 18px 28px !important;
+    }
+
+    .dashboard-hero {
+      padding: 26px !important;
+      border-radius: 28px !important;
+    }
+
+    .dashboard-stats-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dashboard-shell {
+      row-gap: 18px;
+    }
+
+    .dashboard-hero {
+      padding: 22px !important;
+      border-radius: 26px !important;
+    }
+
+    .dashboard-hero-grid,
+    .dashboard-dual-grid,
+    .dashboard-actions-grid,
+    .dashboard-security-grid,
+    .dashboard-ops-row {
+      grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-hero-actions {
+      gap: 12px !important;
+      align-items: stretch !important;
+    }
+
+    .dashboard-hero-actions > * {
+      width: 100%;
+    }
+
+    .dashboard-user-pill {
+      justify-content: flex-start;
+    }
+
+    .dashboard-stats-grid {
+      gap: 14px !important;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .dashboard-page {
+      padding: 6px 12px 22px !important;
+    }
+
+    .dashboard-hero {
+      padding: 18px !important;
+      border-radius: 22px !important;
+    }
+
+    .dashboard-stats-grid,
+    .dashboard-security-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    .dashboard-ops-row {
+      gap: 10px !important;
+    }
+
+    .dashboard-ops-row > :last-child {
+      text-align: left !important;
+    }
+  }

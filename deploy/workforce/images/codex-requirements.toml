@@ -1,0 +1,25 @@
+allow_managed_hooks_only = true
+
+[features]
+hooks = true
+
+[hooks]
+managed_dir = "/usr/local/bin"
+
+[[hooks.PreToolUse]]
+matcher = ".*"
+
+[[hooks.PreToolUse.hooks]]
+type = "command"
+command = "/usr/local/bin/seven-hook dispatch --event codex.PreToolUse"
+timeout = 30
+statusMessage = "Applying Seven managed Hook policy"
+
+[[hooks.PostToolUse]]
+matcher = ".*"
+
+[[hooks.PostToolUse.hooks]]
+type = "command"
+command = "/usr/local/bin/seven-hook dispatch --event codex.PostToolUse"
+timeout = 30
+statusMessage = "Recording Seven managed Hook result"
