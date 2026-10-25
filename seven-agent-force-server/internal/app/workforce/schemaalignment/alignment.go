@@ -3250,6 +3250,7 @@ func ensureProviderInvocationSchema(ctx context.Context, tx pgx.Tx, idGen IDGene
 		`ALTER TABLE workforce_model_credentials ADD CONSTRAINT workforce_model_credentials_protocol_check CHECK (protocol IN ('OPENAI','ANTHROPIC'))`,
 		`ALTER TABLE workforce_model_credentials DROP CONSTRAINT IF EXISTS workforce_provider_profiles_tenant_id_name_key`,
 		`ALTER TABLE workforce_model_credentials DROP CONSTRAINT IF EXISTS workforce_model_credentials_tenant_id_name_key`,
+		`ALTER TABLE workforce_model_credentials DROP CONSTRAINT IF EXISTS workforce_provider_profiles_status_check`,
 		`ALTER TABLE workforce_model_credentials DROP CONSTRAINT IF EXISTS workforce_model_credentials_status_check`,
 		`ALTER TABLE workforce_model_credentials DROP CONSTRAINT IF EXISTS workforce_model_credentials_status_ck`,
 		`ALTER TABLE workforce_model_credentials DROP CONSTRAINT IF EXISTS workforce_model_credentials_secret_ciphertext_check`,

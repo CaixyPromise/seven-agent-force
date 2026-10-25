@@ -233,7 +233,9 @@ CREATE TABLE workforce_provider_profiles (
  secret_ciphertext TEXT NOT NULL, secret_edek TEXT NOT NULL, secret_wrap_key_ref TEXT NOT NULL,
  secret_hint TEXT NOT NULL, status TEXT NOT NULL, version BIGINT NOT NULL DEFAULT 1,
  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
- UNIQUE(tenant_id,alias), CONSTRAINT workforce_provider_profiles_protocol_check CHECK(protocol='OPENAI_RESPONSES'));
+ UNIQUE(tenant_id,alias),
+ CONSTRAINT workforce_provider_profiles_status_check CHECK(status IN ('ACTIVE','DISABLED')),
+ CONSTRAINT workforce_provider_profiles_protocol_check CHECK(protocol='OPENAI_RESPONSES'));
 CREATE TABLE workforce_provider_invocations (
  invocation_id TEXT PRIMARY KEY, tenant_id BIGINT NOT NULL, task_id BIGINT NOT NULL,
  execution_kind TEXT NOT NULL DEFAULT 'AGENT_ATTEMPT', attempt_id BIGINT, review_run_id BIGINT,
@@ -329,6 +331,12 @@ VALUES (8150000000000000003,8150000000000000002,8150000000000000006,'legacy-mode
 		}
 		if invocationID <= 0 || credentialVersion != 1 || requestedModel != "gpt-helper" || primaryModel != "gpt-helper" || invocationProtocol != "OPENAI" {
 			t.Fatalf("converted invocation id=%d version=%d requested=%q primary=%q protocol=%q", invocationID, credentialVersion, requestedModel, primaryModel, invocationProtocol)
+		}
+		if _, err = pool.Exec(ctx, `UPDATE workforce_model_credentials SET status='DELETED',secret_ciphertext=NULL,secret_edek=NULL,secret_wrap_key_ref=NULL,secret_hint='' WHERE id=8150000000000000001`); err != nil {
+			t.Fatalf("aligned legacy credential must support deletion: %v", err)
+		}
+		if _, err = pool.Exec(ctx, `UPDATE workforce_model_credentials SET status='INVALID' WHERE id=8150000000000000001`); err == nil {
+			t.Fatal("credential lifecycle constraint must still reject unknown states")
 		}
 	})
 }

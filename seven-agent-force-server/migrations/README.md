@@ -29,8 +29,8 @@ make migrate-status
 make migrate-up
 make migrate-down
 make migrate-create NAME=add_sso_client
-go run ./cmd/migrate inspect
-go run ./cmd/migrate bootstrap
+go run ./cmd/seven-agent-force-server migrate inspect
+go run ./cmd/seven-agent-force-server migrate bootstrap
 ```
 
 Bootstrap config:
@@ -56,3 +56,7 @@ Behavior:
   - `LEGACY_UNMANAGED_SCHEMA`: requires `allowLegacySync=true`, writes baseline version records, then runs `up`
 - Startup auto-bootstrap is disabled by default and only runs when
   `datasource.bootstrap.enabled=true` and `mode=startup|both`.
+
+## PostgreSQL installation
+
+The inspect/bootstrap state orchestrator above is MySQL-only. Workforce PostgreSQL uses the explicit [baseline then upgrade chain](../../docs/database-schema.md); PostgreSQL operators use up/status/version and do not run the MySQL bootstrap commands.

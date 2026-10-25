@@ -1,27 +1,15 @@
 # PostgreSQL clean-install baseline
 
-This directory is only for a brand-new, empty PostgreSQL database. The snapshot
-contains the complete schema and seed state through version `20260719110000`.
-It deliberately excludes Goose's own version table.
-During the snapshot transaction it records every historical PostgreSQL
-migration represented by the snapshot. The regular migration directory contains
-a no-op marker at the same cutoff version, so switching back to the regular
-upgrade chain does not require `-allow-missing`.
+For a brand-new empty PostgreSQL database only. This baseline represents source schema/system seeds through version `20260719110000` and registers the covered Goose versions inside the migration transaction. Then apply the regular upgrade chain.
 
-Run the clean baseline first:
+From the Server source directory, with a private PostgreSQL configuration:
 
-```bash
-go run ./cmd/migrate -dir migrations/postgres-baseline up
+```sh
+go run ./cmd/seven-agent-force-server migrate --config-dir /path/to/config --dir migrations/postgres-baseline up
+go run ./cmd/seven-agent-force-server migrate --config-dir /path/to/config up
+go run ./cmd/seven-agent-force-server migrate --config-dir /path/to/config status
 ```
 
-Then run the regular upgrade chain so migrations newer than the snapshot are
-applied:
+Release packages provide `bin/seven-agent-force-server` and both migration directories. PostgreSQL does not use the MySQL-only inspect/bootstrap path. See docs/database-schema.md in the source checkout or release package.
 
-```bash
-go run ./cmd/migrate -dir migrations/postgres up
-```
-
-Never run the baseline directory against an existing database. Existing
-databases keep using `migrations/postgres` and their current Goose version
-records. The snapshot migration is forward-only; its Down section does not drop
-application tables or seed data.
+Never run this baseline on an existing business database. Existing installations use regular forward migrations. Down is intentionally rejected. The baseline omits pg_dump's PG17+ transaction_timeout setting so the same clean-install path works on PostgreSQL 16 as well as 18; it does not copy a live database's rows or roles.

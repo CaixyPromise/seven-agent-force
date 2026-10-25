@@ -2,12 +2,10 @@
 set -euo pipefail
 
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-# A Git checkout requires clean tracked input; an archive uses its supplied sources.
-git_root="$(git -C "$root_dir" rev-parse --show-toplevel 2>/dev/null || true)"
-if [[ "$git_root" == "$root_dir" ]]; then
-  if ! git -C "$root_dir" diff --quiet || ! git -C "$root_dir" diff --cached --quiet; then
-    echo "commit tracked changes before building a release" >&2; exit 1
-  fi
+# A release's source identity must describe the actual tracked build input.
+if ! git -C "$root_dir" diff --quiet || ! git -C "$root_dir" diff --cached --quiet; then
+  echo "commit tracked changes before building a release" >&2
+  exit 1
 fi
 version="${1:-dev}"
 if [[ ! "$version" =~ ^[0-9A-Za-z][0-9A-Za-z._-]*$ ]]; then
@@ -20,11 +18,7 @@ goarch="${GOARCH:-$(go env GOARCH)}"
 # still be installed for the host runner. The service build receives the
 # target values explicitly below.
 unset GOOS GOARCH
-if [[ "$git_root" == "$root_dir" ]]; then
-  commit="${COMMIT:-$(git -C "$root_dir" rev-parse --short HEAD)}"
-else
-  commit="${COMMIT:-source-snapshot}"
-fi
+commit="${COMMIT:-$(git -C "$root_dir" rev-parse --short HEAD 2>/dev/null || echo unknown)}"
 build_date="${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 module_path="github.com/CaixyPromise/seven-agent/force"
 package_name="seven-agent-force_${version}_${goos}_${goarch}"
@@ -64,13 +58,16 @@ cp "$root_dir/seven-agent-force-server/configs/application.example.yaml" "$stage
 cp "$root_dir/seven-agent-force-server/configs/mcp.example.yaml" "$stage/configs/"
 cp -R "$root_dir/seven-agent-force-server/migrations/mysql" "$stage/migrations/"
 cp -R "$root_dir/seven-agent-force-server/migrations/postgres" "$stage/migrations/"
+cp -R "$root_dir/seven-agent-force-server/migrations/postgres-baseline" "$stage/migrations/"
+mkdir -p "$stage/schema"
+cp "$root_dir/seven-agent-force-server/schema/postgres.sql" "$stage/schema/"
 cp -R "$root_dir/seven-agent-force-web/dist" "$stage/web/"
 cp "$root_dir/deploy/nginx/seven-framework.conf.example" "$stage/deploy/nginx/"
 mkdir -p "$stage/docs/workforce" "$stage/deploy/workforce/runtime-sdk" "$stage/metadata"
 cp "$root_dir/seven-agent-force-server/go.mod" "$root_dir/seven-agent-force-server/go.sum" "$stage/metadata/"
 cp "$root_dir/seven-agent-force-web/package.json" "$root_dir/seven-agent-force-web/pnpm-lock.yaml" "$stage/metadata/"
 cp "$root_dir/LICENSE" "$stage/deploy/workforce/runtime-sdk/"
-cp "$root_dir/docs/deployment.md" "$stage/docs/"
+cp "$root_dir/docs/deployment.md" "$root_dir/docs/database-schema.md" "$root_dir/docs/database-storage-contract.md" "$root_dir/docs/migration.md" "$stage/docs/"
 cp "$root_dir/docs/workforce/mvp-runbook.md" "$stage/docs/workforce/"
 # Explicit source allowlist: never recursively copy the local deployment tree.
 # Dockerfiles require the corresponding source checkout as their build context;

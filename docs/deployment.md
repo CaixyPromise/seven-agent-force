@@ -35,7 +35,8 @@ bin/seven-worker-cli
 bin/seven-provider-proxy
 configs/application.example.yaml
 configs/mcp.example.yaml
-migrations/{postgres,mysql}
+migrations/{postgres-baseline,postgres,mysql}
+schema/postgres.sql
 web/dist/
 deploy/nginx/seven-framework.conf.example
 deploy/workforce/runtime-sdk/
@@ -82,6 +83,8 @@ Prefer a dedicated rootless Linux Worker; qualify the selected host configuratio
 before accepting untrusted workloads. Configure exact admitted Runtime and Proxy
 digests, capacity, disk limits and allowed egress. Never expand egress merely to
 make a failed task pass.
+
+For a new empty PostgreSQL database, apply the packaged baseline before the regular upgrades; follow [database initialization](database-schema.md). A schema-only file does not include the system seeds or Goose ledger.
 
 ## Installation order (operator actions, not run by packaging)
 

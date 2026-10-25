@@ -4,12 +4,16 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/CaixyPromise/seven-agent/force/internal/app/workforce/schemacontract"
 	"github.com/jackc/pgx/v5"
 )
 
 // alignWorkforceColumnTypes applies the current unpublished schema's storage
 // rules to an existing development database.
 func alignWorkforceColumnTypes(ctx context.Context, tx pgx.Tx) error {
+	if err := schemacontract.ApplyComplete(ctx, tx); err != nil {
+		return fmt.Errorf("reviewed storage contract: %w", err)
+	}
 	if err := alignTaskNotificationOccurrence(ctx, tx); err != nil {
 		return err
 	}

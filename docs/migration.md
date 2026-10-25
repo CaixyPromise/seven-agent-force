@@ -1,29 +1,19 @@
-# Database Migration
+# Database migration
 
-Seven Framework maintains parallel migration histories for MySQL and PostgreSQL. It uses Goose and protects the configured version table, baselines, forward-only migrations, and database-name safety checks already present in the service.
+Workforce uses PostgreSQL. See the [database schema and initialization guide](database-schema.md) for the complete clean-install and schema-only export procedure.
 
-## Initialize and inspect
+## PostgreSQL clean install
 
-Configure exactly one datasource and run:
+Use the real `seven-agent-force-server migrate` subcommand. Apply `migrations/postgres-baseline` once to a new empty database, then `migrations/postgres`. Never apply the baseline to an existing business database. The source form is `go run ./cmd/seven-agent-force-server migrate` from the Server directory.
 
-```bash
-seven-agent-force-server migrate --home /opt/seven-agent-force inspect
-seven-agent-force-server migrate --home /opt/seven-agent-force bootstrap
-seven-agent-force-server migrate --home /opt/seven-agent-force status
-```
+`inspect/bootstrap` currently belongs to the MySQL bootstrap implementation; do not use it to initialize PostgreSQL. Configure the PostgreSQL datasource explicitly, use baseline/up/status/version, and finish normal application initialization afterward.
 
-Bootstrap must be explicitly enabled in `datasource.bootstrap` and should first be exercised against a disposable database. For an empty database, follow the inspection recommendation. For an existing database, record the current version before upgrading.
+## Existing installations
 
-## Upgrade and rollback
+Back up and verify the selected database before applying forward upgrades. Keep migration/version-table ownership with Goose and stop incompatible dispatch before schema changes. Do not force version records, rerun a baseline or use destructive Down to bypass a failed precondition.
 
-```bash
-seven-agent-force-server migrate --home /opt/seven-agent-force up
-seven-agent-force-server migrate --home /opt/seven-agent-force version
-seven-agent-force-server migrate --home /opt/seven-agent-force down
-```
+The baseline includes only source-controlled system seed definitions. The separate `schema/postgres.sql` contains no rows or version ledger and cannot replace baseline plus upgrade migrations.
 
-Some migrations are intentionally forward-only and reject destructive `down` execution. That rejection is part of the compatibility contract. Never force a version-table value or bypass a database-name guard to make a migration appear successful.
+## Other database support
 
-## Verification
-
-Test both clean initialization and upgrade from the supported prior version in dedicated MySQL and PostgreSQL databases. Validate the exact connected database name before reset, inspect key tables and indexes afterward, and keep development and production DSNs out of test commands and logs.
+Framework-derived MySQL migrations are retained for their supported foundation modules. They are not a complete Workforce installation option. Follow the actual module/driver contract; do not infer support from the presence of a SQL directory.
