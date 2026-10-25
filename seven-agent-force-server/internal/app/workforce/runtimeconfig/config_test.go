@@ -85,3 +85,18 @@ func TestValidateRejectsFloatingProviderProxyImage(t *testing.T) {
 		t.Fatalf("Validate() rejected an exact Provider Proxy image: %v", err)
 	}
 }
+
+func TestValidateProxySeparatesManifestReferenceFromDockerConfigIdentity(t *testing.T) {
+	digest := "sha256:" + strings.Repeat("a", 64)
+	if !exactImageReference(digest, digest) {
+		t.Fatal("immutable local Docker image ID rejected")
+	}
+	if !exactImageReference("registry.example.invalid/proxy@sha256:"+strings.Repeat("b", 64), digest) {
+		t.Fatal("OCI manifest and Docker config IDs are distinct identities")
+	}
+	for _, ref := range []string{"proxy:latest", "proxy@sha256:short", "proxy@sha256:" + strings.Repeat("B", 64)} {
+		if exactImageReference(ref, digest) {
+			t.Fatalf("unqualified image accepted: %s", ref)
+		}
+	}
+}

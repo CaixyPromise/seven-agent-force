@@ -215,5 +215,24 @@ func exactImageReference(image, digest string) bool {
 			return false
 		}
 	}
-	return image != "" && strings.HasSuffix(image, "@"+digest)
+	// Docker config IDs (the Worker inventory identity) and OCI manifest
+	// digests differ. Both references are immutable; VerifyProviderProxy binds
+	// the inspected config ID to ImageDigest before admitting the image.
+	if image == digest {
+		return true
+	}
+	parts := strings.Split(image, "@")
+	if len(parts) != 2 || parts[0] == "" {
+		return false
+	}
+	refDigest := parts[1]
+	if len(refDigest) != 71 || !strings.HasPrefix(refDigest, "sha256:") {
+		return false
+	}
+	for _, c := range refDigest[7:] {
+		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
+			return false
+		}
+	}
+	return true
 }

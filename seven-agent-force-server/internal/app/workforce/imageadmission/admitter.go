@@ -532,7 +532,7 @@ func verifyEnvironmentCapabilities(ctx context.Context, imageID string, capabili
 
 func environmentProbeFailure(capability string, commandErr, contextErr error) error {
 	var exit *exec.ExitError
-	if contextErr == nil && errors.As(commandErr, &exit) && exit.ExitCode() == 1 {
+	if contextErr == nil && errors.As(commandErr, &exit) && (exit.ExitCode() == 1 || exit.ExitCode() == 127) {
 		return fmt.Errorf("IMAGE_ENVIRONMENT_CAPABILITY_MISSING: %s", capability)
 	}
 	return fmt.Errorf("%w: environment probe for %s did not complete", ErrInspectionUnavailable, capability)

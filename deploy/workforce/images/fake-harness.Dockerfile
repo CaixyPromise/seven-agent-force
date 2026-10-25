@@ -15,6 +15,8 @@ RUN cd seven-agent-force-server && CGO_ENABLED=0 go build -trimpath \
 
 FROM ${RUNTIME_IMAGE}
 
+ARG PNPM_VERSION=10.15.1
+
 USER root
 
 RUN (command -v git >/dev/null && command -v node >/dev/null && command -v python3 >/dev/null && test -f /etc/ssl/certs/ca-certificates.crt || apk add --no-cache ca-certificates git nodejs python3) && \
@@ -22,6 +24,10 @@ RUN (command -v git >/dev/null && command -v node >/dev/null && command -v pytho
     (grep -q '^seven:' /etc/passwd || adduser -D -u 10001 -G seven seven) && \
     mkdir -p /etc/codex /opt/seven-worker/contract /opt/seven-worker/assets/hooks /opt/seven-worker/assets/prompts /opt/seven-worker/assets/schemas /opt/seven-worker/result-processors && \
     chown -R root:root /opt/seven-worker
+
+# Admission verifies the declared package-manager.pnpm capability.
+RUN apk add --no-cache npm && npm install --global "pnpm@${PNPM_VERSION}" && \
+    test "$(pnpm --version)" = "${PNPM_VERSION}"
 
 ARG SEVEN_VERSION=0.1.0-dev
 ARG SEVEN_COMMIT=0000000

@@ -137,6 +137,8 @@ For a new empty PostgreSQL database, apply the packaged baseline before the regu
    Preserve Authorization, Host and Origin validation, and disable buffering for
    streaming endpoints. Do not expose development Vite directly.
 
+Containerized Linux Workers require matching private file ownership, shared daemon-visible temporary/workspace paths, and explicit socket group access. Follow [containerized Worker setup](workforce/worker-container.md).
+
 ## First-host acceptance and rollback
 
 Record package SHA, image digests and configuration revision. Check normal login,

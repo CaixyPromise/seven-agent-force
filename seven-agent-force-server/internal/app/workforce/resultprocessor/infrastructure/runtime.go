@@ -127,6 +127,10 @@ func (s *Store) MaterializeEvaluationEnvironment(ctx context.Context, identity f
 // PersistEvaluation is the server-side acknowledgement boundary. No
 // Supervisor action after process(context) is legal until this method commits
 // an immutable cycle and returns its directive.
+// Explicit text casts keep CASE and comparison parameters consistent for both
+// historical TEXT and current VARCHAR columns. An existing digest is immutable.
+const persistSessionDigestSQL = `UPDATE workforce_task_turns SET session_digest=CASE WHEN session_digest='' THEN $2::text WHEN session_digest=$2::text THEN session_digest ELSE session_digest END WHERE id=$1`
+
 func (s *Store) PersistEvaluation(ctx context.Context, identity facade.MachineIdentity, attemptID int64, leaseToken string, candidate facade.EvaluationCandidate) (facade.EvaluationDirective, error) {
 	if err := validRuntimeIdentity(identity, attemptID, leaseToken); err != nil {
 		return facade.EvaluationDirective{}, err
@@ -298,7 +302,7 @@ func (s *Store) PersistEvaluation(ctx context.Context, identity facade.MachineId
 		}
 	}
 	if candidate.SessionDigest != "" {
-		if _, err = tx.Exec(ctx, `UPDATE workforce_task_turns SET session_digest=CASE WHEN session_digest='' THEN $2 WHEN session_digest=$2 THEN session_digest ELSE session_digest END WHERE id=$1`, scope.TurnID, candidate.SessionDigest); err != nil {
+		if _, err = tx.Exec(ctx, persistSessionDigestSQL, scope.TurnID, candidate.SessionDigest); err != nil {
 			return facade.EvaluationDirective{}, evaluationStoreError("SESSION", err)
 		}
 	}
