@@ -24,6 +24,28 @@ Syft if missing, which requires network access. Never disable a failed gate to
 label a package publishable. Build on a trusted machine without private Web
 build-time environment overrides: Vite embeds VITE_* values into public assets.
 
+### Reusing verified CI checks
+
+Use a clean checkout and an authenticated GitHub CLI. If the same commit has a
+successful CI run, build without repeating its application checks:
+
+```sh
+GOOS=linux GOARCH=amd64 scripts/release/build.sh 0.1.0-preview.1 --verified-ci-run RUN_ID
+```
+
+The verifier reads the run and its required `server`, `web` and `secrets` jobs
+from the fixed GitHub repository. Pending, skipped, failed or missing jobs are
+rejected. Evidence from an ancestor is accepted only when every changed path is
+an explicitly allowed release-assembly script or deployment document; application
+source, dependency locks and CI definitions must be identical. Local Web overrides
+are rejected. The package records the actual source commit and reused evidence
+in `checks.json`; a caller-supplied success JSON cannot bypass verification.
+
+New release-assembly logic must have its focused tests run before packaging.
+Asset compilation, target binaries, package SBOM/licenses, sensitive-content
+checks and checksums still run because they validate the newly created artifact.
+Without this option the existing full build checks remain enabled.
+
 The archive under `dist/release/` contains:
 
 ```text
@@ -42,6 +64,7 @@ deploy/nginx/seven-framework.conf.example
 deploy/workforce/runtime-sdk/
 docs/deployment.md
 docs/workforce/mvp-runbook.md
+docs/workforce/worker-container.md
 metadata/{go.mod,go.sum,package.json,pnpm-lock.yaml}
 RELEASE.txt
 LICENSE, NOTICE, README.md

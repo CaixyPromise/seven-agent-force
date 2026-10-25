@@ -8,6 +8,15 @@ if ! git -C "$root_dir" diff --quiet || ! git -C "$root_dir" diff --cached --qui
   exit 1
 fi
 version="${1:-dev}"
+shift "$(( $# > 0 ? 1 : 0 ))"
+ci_run=""
+if [[ $# -gt 0 ]]; then
+  if [[ $# -ne 2 || "$1" != "--verified-ci-run" ]]; then
+    echo "usage: build.sh VERSION [--verified-ci-run RUN_ID]" >&2
+    exit 2
+  fi
+  ci_run="$2"
+fi
 if [[ ! "$version" =~ ^[0-9A-Za-z][0-9A-Za-z._-]*$ ]]; then
   echo "invalid version: use only letters, numbers, dots, underscores, and hyphens" >&2
   exit 2
@@ -18,7 +27,7 @@ goarch="${GOARCH:-$(go env GOARCH)}"
 # still be installed for the host runner. The service build receives the
 # target values explicitly below.
 unset GOOS GOARCH
-commit="${COMMIT:-$(git -C "$root_dir" rev-parse --short HEAD 2>/dev/null || echo unknown)}"
+commit="$(git -C "$root_dir" rev-parse HEAD)"
 build_date="${BUILD_DATE:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
 module_path="github.com/CaixyPromise/seven-agent/force"
 package_name="seven-agent-force_${version}_${goos}_${goarch}"
@@ -35,19 +44,27 @@ if [[ -e "$stage" ]]; then
 fi
 mkdir -p "$stage/bin" "$stage/configs" "$stage/migrations" "$stage/web" "$stage/deploy/nginx"
 
+if [[ -n "$ci_run" ]]; then
+  python3 "$root_dir/scripts/release/verified_checks.py" --run "$ci_run" --output "$stage/checks.json"
+fi
+
 cd "$root_dir/seven-agent-force-web"
 pnpm install --frozen-lockfile
-pnpm audit --prod --audit-level high
-pnpm exec tsc -b
-pnpm lint
+if [[ -z "$ci_run" ]]; then
+  pnpm audit --prod --audit-level high
+  pnpm exec tsc -b
+  pnpm lint
+fi
 pnpm build
 
 cd "$root_dir/seven-agent-force-server"
+if [[ -z "$ci_run" ]]; then
 if ! command -v govulncheck >/dev/null 2>&1; then
   GOTOOLCHAIN="$(go env GOVERSION)" GOBIN="$root_dir/.local/bin" go install golang.org/x/vuln/cmd/govulncheck@v1.1.4
   export PATH="$root_dir/.local/bin:$PATH"
 fi
 "$root_dir/scripts/check-go-vulnerabilities.sh"
+fi
 for command in seven-agent-force-server seven-agent-force-mcp-server seven-worker seven-workerctl seven-worker-cli seven-provider-proxy; do
   CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" go build -trimpath \
     -ldflags "-s -w -X '${module_path}/internal/shared/buildinfo.Version=${version}' -X '${module_path}/internal/shared/buildinfo.Commit=${commit}' -X '${module_path}/internal/shared/buildinfo.BuildDate=${build_date}'" \
@@ -68,7 +85,7 @@ cp "$root_dir/seven-agent-force-server/go.mod" "$root_dir/seven-agent-force-serv
 cp "$root_dir/seven-agent-force-web/package.json" "$root_dir/seven-agent-force-web/pnpm-lock.yaml" "$stage/metadata/"
 cp "$root_dir/LICENSE" "$stage/deploy/workforce/runtime-sdk/"
 cp "$root_dir/docs/deployment.md" "$root_dir/docs/database-schema.md" "$root_dir/docs/database-storage-contract.md" "$root_dir/docs/migration.md" "$stage/docs/"
-cp "$root_dir/docs/workforce/mvp-runbook.md" "$stage/docs/workforce/"
+cp "$root_dir/docs/workforce/mvp-runbook.md" "$root_dir/docs/workforce/worker-container.md" "$stage/docs/workforce/"
 # Explicit source allowlist: never recursively copy the local deployment tree.
 # Dockerfiles require the corresponding source checkout as their build context;
 # they are documented in the manifest, not shipped as standalone runnable images.
