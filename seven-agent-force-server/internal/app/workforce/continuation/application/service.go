@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/CaixyPromise/seven-agent/force/internal/app/workforce/continuation/domain"
+	workitem "github.com/CaixyPromise/seven-agent/force/internal/app/workforce/workitem/facade"
 	wcp "github.com/CaixyPromise/seven-agent/force/internal/worker/checkpoint"
 )
 
@@ -89,11 +90,14 @@ type CheckpointKeyMaterialization struct {
 type Service struct {
 	repository Repository
 	keys       KeyWrapper
+	workItems  workitem.TaskMembership
 }
 
 func New(repository Repository) *Service { return &Service{repository: repository} }
 
 func (s *Service) SetKeyWrapper(keys KeyWrapper) { s.keys = keys }
+
+func (s *Service) SetWorkItemMembership(v workitem.TaskMembership) { s.workItems = v }
 
 func (s *Service) IssueCheckpointKey(ctx context.Context, authority MachineAuthority, checkpointIdentity string) (CheckpointKeyMaterialization, error) {
 	checkpointIdentity = strings.TrimSpace(checkpointIdentity)
@@ -155,6 +159,15 @@ func (s *Service) CreateNextTurn(ctx context.Context, request CreateNextTurnRequ
 	}
 	if err := domain.ValidateInstruction(request.Instruction); err != nil {
 		return domain.Turn{}, false, err
+	}
+	if s.workItems != nil {
+		managed, err := s.workItems.IsWorkItemTask(ctx, request.TenantID, request.TaskID)
+		if err != nil {
+			return domain.Turn{}, false, err
+		}
+		if managed {
+			return domain.Turn{}, false, domain.ErrContinuationNotAllowed
+		}
 	}
 	return s.repository.CreateNextTurn(ctx, request)
 }

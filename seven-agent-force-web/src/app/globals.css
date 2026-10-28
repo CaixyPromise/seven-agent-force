@@ -343,3 +343,18 @@
       text-align: left !important;
     }
   }
+
+@media (max-width: 767px) {
+  /* A collapsed desktop sidebar uses a vertical account menu; the mobile
+     header needs the same controls in one compact row. */
+  .ant-pro-global-header-header-actions-avatar > div,
+  .ant-pro-global-header-header-actions-avatar > div > span {
+    flex-direction: row !important;
+    gap: 0 !important;
+    width: auto !important;
+  }
+
+  .ant-pro-global-header-header-actions-avatar button[aria-label="个人菜单"] > div > span:not(.ant-avatar) {
+    display: none;
+  }
+}

@@ -191,6 +191,10 @@ func (s *Store) SetReviewRunWorkspaceRetention(retention reviewrunfacade.Workspa
 }
 
 type CreateParams struct {
+	Transaction                  pgx.Tx
+	StagePurpose                 string
+	ApprovedPlan                 json.RawMessage
+	FrozenProjectVersion         bool
 	ProjectSpec                  *projectfacade.FrozenTaskSpec
 	CompletionCheck              *completioncheck.Snapshot
 	TenantID                     int64
@@ -281,17 +285,29 @@ func (s *Store) FindIdempotent(ctx context.Context, tenantID int64, creatorUserI
 }
 
 func (s *Store) Create(ctx context.Context, p CreateParams) (domain.Task, bool, error) {
-	if p.SelectedRuntimeReleaseID < 1 {
-		return domain.Task{}, false, errors.New("TASK_RUNTIME_SELECTION_REQUIRED")
-	}
-	if p.CreatedBy <= 0 {
-		return domain.Task{}, false, errors.New("TASK_CREATOR_IDENTITY_REQUIRED")
+	if p.Transaction != nil {
+		return s.createTx(ctx, p.Transaction, p)
 	}
 	tx, err := s.db.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return domain.Task{}, false, err
 	}
 	defer tx.Rollback(ctx)
+	task, replay, err := s.createTx(ctx, tx, p)
+	if err != nil {
+		return domain.Task{}, false, err
+	}
+	if err = tx.Commit(ctx); err != nil {
+		return domain.Task{}, false, err
+	}
+	return task, replay, nil
+}
+
+func (s *Store) createTx(ctx context.Context, tx pgx.Tx, p CreateParams) (domain.Task, bool, error) {
+	if p.SelectedRuntimeReleaseID < 1 || p.CreatedBy < 1 {
+		return domain.Task{}, false, errors.New("TASK_SELECTION_OR_ACTOR_REQUIRED")
+	}
+	var err error
 
 	// Application submissions are serialized with enable/disable before any
 	// idempotency decision. Holding this row lock until commit makes a disabled
@@ -356,8 +372,17 @@ SELECT EXISTS (
 			}
 			return domain.Task{}, false, err
 		}
-		if status != projectfacade.StatusActive || currentVersion != spec.ProjectVersionID {
+		if status != projectfacade.StatusActive || (!p.FrozenProjectVersion && currentVersion != spec.ProjectVersionID) {
 			return domain.Task{}, false, ErrProjectConfigurationChanged
+		}
+		if p.FrozenProjectVersion {
+			var versionID int64
+			if err := tx.QueryRow(ctx, `SELECT id FROM workforce_project_versions WHERE id=$1 AND project_id=$2 AND tenant_id=$3 FOR SHARE`, spec.ProjectVersionID, spec.ProjectID, p.TenantID).Scan(&versionID); err != nil {
+				if errors.Is(err, pgx.ErrNoRows) {
+					return domain.Task{}, false, ErrProjectConfigurationChanged
+				}
+				return domain.Task{}, false, err
+			}
 		}
 		requirementsJSON, err := json.Marshal(spec.ExecutionRequirements)
 		if err != nil {
@@ -387,7 +412,7 @@ SELECT EXISTS (
 	// The Task freezes business policy only. Runtime, Provider, model, Hook and
 	// Worker identities are resolved later by executionrouting and persisted on
 	// the Assignment/Attempt.
-	snapshot := domain.ExecutionSnapshot{IsolationProfile: "seven.worker-image/v1"}
+	snapshot := domain.ExecutionSnapshot{IsolationProfile: "seven.worker-image/v1", StagePurpose: p.StagePurpose, ApprovedPlan: p.ApprovedPlan}
 	if p.ResultProcessorExecution.ReleaseID <= 0 || strings.TrimSpace(p.ResultProcessorExecution.Digest) == "" {
 		return domain.Task{}, false, errors.New("Result Processor execution identity is required")
 	}
@@ -455,6 +480,14 @@ ON CONFLICT (tenant_id,created_by,idempotency_key) DO NOTHING`,
 		task, err := s.getWith(ctx, tx, existingID)
 		return task, true, err
 	}
+	if len(p.ApprovedPlan) > 0 {
+		if !json.Valid(p.ApprovedPlan) || len(p.ApprovedPlan) > 256*1024 {
+			return domain.Task{}, false, errors.New("WORK_ITEM_PLAN_INPUT_INVALID")
+		}
+		if _, err = tx.Exec(ctx, `UPDATE workforce_tasks SET work_item_input_json=$2 WHERE id=$1`, taskID, p.ApprovedPlan); err != nil {
+			return domain.Task{}, false, err
+		}
+	}
 	if _, err = tx.Exec(ctx, `INSERT INTO workforce_task_turns (id,task_id,tenant_id,turn_number,instruction,execution_snapshot_digest,continuation_lineage_id,created_by,processor_release_id,processor_digest,environment_config_digest,environment_snapshot_json,secret_version_identities,parameters_json,status) VALUES ($1,$2,$3,1,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,'ACTIVE')`, turnID, taskID, p.TenantID, p.Instruction, executionRequirementDigest, taskID, p.CreatedBy, snapshot.ResultProcessorReleaseID, snapshot.ResultProcessorDigest, snapshot.EnvironmentConfigDigest, defaultJSON(snapshot.ResultProcessorEnvironment), defaultJSONArray(snapshot.SecretVersionIdentities), defaultJSON(snapshot.ResultProcessorParameters)); err != nil {
 		return domain.Task{}, false, err
 	}
@@ -502,10 +535,7 @@ ON CONFLICT (tenant_id,created_by,idempotency_key) DO NOTHING`,
 	if _, _, err = s.notifications.CreateSubscription(ctx, tx, p.TenantID, taskID, p.CreatedBy, command); err != nil {
 		return domain.Task{}, false, err
 	}
-	if err := tx.Commit(ctx); err != nil {
-		return domain.Task{}, false, err
-	}
-	task, err := s.Get(ctx, taskID)
+	task, err := s.getWith(ctx, tx, taskID)
 	return task, false, err
 }
 

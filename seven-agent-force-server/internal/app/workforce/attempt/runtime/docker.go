@@ -739,6 +739,11 @@ func (d *Docker) Run(ctx context.Context, item domain.WorkItem, attempt domain.A
 	if completionInputErr != nil {
 		return RunResult{}, completionInputErr
 	}
+	stageInstruction, stageErr := d.materializeStageInput(item, attempt, workspace, containerTaskRoot, completionInstruction)
+	if stageErr != nil {
+		return RunResult{}, stageErr
+	}
+	completionInstruction = stageInstruction
 	spec["instruction"] = completionInstruction
 	if correctionEntry, correctionErr := d.materializeReviewCorrection(item, attempt, workspace, containerTaskRoot); correctionErr != nil {
 		return RunResult{}, correctionErr
@@ -841,6 +846,9 @@ func (d *Docker) Run(ctx context.Context, item domain.WorkItem, attempt domain.A
 		// 108 bytes and the contract deliberately includes both stable IDs.
 		"-e", "SEVEN_CONTROL_SOCKET=" + filepath.Join(containerAttemptRoot, "runtime", "s"),
 		"-e", "TMPDIR=" + filepath.Join(containerAttemptRoot, "tmp"),
+	}
+	if item.ExecutionSnapshot.StagePurpose == "PLAN" {
+		args = append(args, "-e", "SEVEN_PLANNING_SOURCE="+filepath.Join(containerTaskRoot, "input", "attempts", strconv.FormatInt(attempt.ID, 10), "planning-source"))
 	}
 	for _, key := range sortedLabelKeys(attempt.RuntimeLabels) {
 		args = append(args, "--label", key+"="+attempt.RuntimeLabels[key])

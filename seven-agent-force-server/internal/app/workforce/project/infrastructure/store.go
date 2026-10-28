@@ -23,7 +23,7 @@ type Store struct {
 func New(db *pgxpool.Pool, idGen IDGenerator) *Store { return &Store{db: db, idGen: idGen} }
 
 func (s *Store) GetProjectRepository(ctx context.Context, tenant, projectID, versionID int64) (gitdomain.RepositoryTarget, error) {
-	item, err := scan(s.db.QueryRow(ctx, projectSelect+` WHERE p.tenant_id=$1 AND p.id=$2 AND v.id=$3`, tenant, projectID, versionID))
+	item, err := s.GetVersion(ctx, tenant, projectID, versionID)
 	if err != nil || item.Kind != "CODEBASE" || item.RepositoryConfigDigest == "" {
 		return gitdomain.RepositoryTarget{}, domain.ErrInvalid
 	}
@@ -275,7 +275,10 @@ func (s *Store) ValidateProjectReferences(ctx context.Context, tenant int64, req
 	return nil
 }
 
-const projectSelect = `SELECT p.id,p.tenant_id,p.project_key,v.name,v.description,COALESCE(v.department_id,0),v.kind,p.status,v.id,COALESCE(v.repository_provider_type,''),COALESCE(v.repository_scheme,''),COALESCE(v.repository_host,''),COALESCE(v.repository_port,0),COALESCE(v.repository_path,''),COALESCE(v.repository_display_url,''),COALESCE(v.repository_web_url,''),COALESCE(encode(v.repository_credential_ciphertext,'base64'),''),COALESCE(encode(v.repository_credential_edek,'base64'),''),COALESCE(v.repository_credential_wrap_key_ref,''),COALESCE(v.repository_credential_version,0),COALESCE(v.repository_config_digest,''),COALESCE(p.current_source_state,''),COALESCE(v.repository_capabilities_json,'{}'::jsonb),COALESCE(v.repository_last_check_status,''),COALESCE(v.repository_last_check_reason_code,''),COALESCE(to_char(v.repository_last_checked_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),''),COALESCE(p.current_source_revision_id,0),COALESCE(v.default_ref_name,''),v.tech_stack_json,v.agent_guidance,v.completion_check_json,v.completion_check_digest,COALESCE(v.result_processor_release_id,0),v.result_processor_parameters_json,v.review_prompt,v.delivery_mode,v.delivery_authorization,COALESCE(v.delivery_authorized_by_principal_id,0),v.result_branch_pattern,v.notification_enabled,v.notification_events_json,COALESCE(v.notification_group_route_id,0),v.hook_release_ids,to_char(p.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),to_char(p.updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),COALESCE(to_char(p.archived_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),'') FROM workforce_projects p JOIN workforce_project_versions v ON v.tenant_id=p.tenant_id AND v.project_id=p.id AND v.id=p.current_version_id`
+const projectSelectBase = `SELECT p.id,p.tenant_id,p.project_key,v.name,v.description,COALESCE(v.department_id,0),v.kind,p.status,v.id,COALESCE(v.repository_provider_type,''),COALESCE(v.repository_scheme,''),COALESCE(v.repository_host,''),COALESCE(v.repository_port,0),COALESCE(v.repository_path,''),COALESCE(v.repository_display_url,''),COALESCE(v.repository_web_url,''),COALESCE(encode(v.repository_credential_ciphertext,'base64'),''),COALESCE(encode(v.repository_credential_edek,'base64'),''),COALESCE(v.repository_credential_wrap_key_ref,''),COALESCE(v.repository_credential_version,0),COALESCE(v.repository_config_digest,''),COALESCE(p.current_source_state,''),COALESCE(v.repository_capabilities_json,'{}'::jsonb),COALESCE(v.repository_last_check_status,''),COALESCE(v.repository_last_check_reason_code,''),COALESCE(to_char(v.repository_last_checked_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),''),COALESCE(p.current_source_revision_id,0),COALESCE(v.default_ref_name,''),v.tech_stack_json,v.agent_guidance,v.completion_check_json,v.completion_check_digest,COALESCE(v.result_processor_release_id,0),v.result_processor_parameters_json,v.review_prompt,v.delivery_mode,v.delivery_authorization,COALESCE(v.delivery_authorized_by_principal_id,0),v.result_branch_pattern,v.notification_enabled,v.notification_events_json,COALESCE(v.notification_group_route_id,0),v.hook_release_ids,to_char(p.created_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),to_char(p.updated_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),COALESCE(to_char(p.archived_at AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.MS"Z"'),'') FROM workforce_projects p JOIN workforce_project_versions v ON v.tenant_id=p.tenant_id AND v.project_id=p.id`
+
+const projectSelect = projectSelectBase + ` AND v.id=p.current_version_id`
+const historicalProjectSelect = projectSelectBase + ` AND v.id=$3`
 
 type rowScanner interface{ Scan(...any) error }
 
@@ -453,4 +456,15 @@ type repositoryValues struct {
 	ConfigDigest, SourceState                                  string
 	Capabilities                                               domain.RepositoryCapabilities
 	LastCheckStatus, LastCheckReasonCode, DefaultRefName       string
+}
+
+func (s *Store) GetVersion(ctx context.Context, tenant, project, version int64) (domain.Project, error) {
+	p, err := scan(s.db.QueryRow(ctx, historicalProjectSelect+` WHERE p.tenant_id=$1 AND p.id=$2`, tenant, project, version))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return domain.Project{}, domain.ErrNotFound
+	}
+	// A historical version's prepared source is resolved by version, never from
+	// the mutable current_source_revision_id projection.
+	p.RepositorySourceState = domain.RepositorySourceReady
+	return p, err
 }

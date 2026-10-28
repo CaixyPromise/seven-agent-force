@@ -9,6 +9,7 @@
 - [Git delivery](authorized-git-delivery-runbook.md)
 - [Independent reviewer](independent-reviewer-runbook.md)
 - [Project routing](project-first-routing.md)
+- [Serial development work items](serial-work-items.md)
 - [Stateless MCP](stateless-open-task-mcp-server.md)
 - [Local operations](mvp-runbook.md)
 

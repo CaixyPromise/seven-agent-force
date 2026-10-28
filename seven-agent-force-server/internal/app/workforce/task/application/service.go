@@ -8,6 +8,7 @@ import (
 	notificationfacade "github.com/CaixyPromise/seven-agent/force/internal/app/notification/facade"
 	completioncheck "github.com/CaixyPromise/seven-agent/force/internal/app/workforce/completioncheck/facade"
 	routingfacade "github.com/CaixyPromise/seven-agent/force/internal/app/workforce/executionrouting/facade"
+	"github.com/jackc/pgx/v5"
 	"strings"
 	"unicode/utf8"
 
@@ -157,6 +158,9 @@ func (s *Service) IndependentReviewInput(ctx context.Context, tenantID, taskID, 
 }
 
 type compiledTaskRequest struct {
+	StagePurpose                   string          `json:",omitempty"`
+	ApprovedPlan                   json.RawMessage `json:",omitempty"`
+	FrozenProjectVersion           bool            `json:",omitempty"`
 	ProjectSpec                    *projectfacade.FrozenTaskSpec
 	CompletionCheck                *completioncheck.Input
 	TaskInput                      taskInputSelection
@@ -207,6 +211,7 @@ type taskNotificationChannel struct {
 }
 
 type submitTaskCommand struct {
+	Transaction              pgx.Tx
 	TenantID                 int64
 	CreatorUserID            int64
 	PrincipalType            string
@@ -514,9 +519,13 @@ func (s *Service) create(ctx context.Context, command submitTaskCommand) (domain
 		}
 	}
 	return s.store.Create(ctx, infrastructure.CreateParams{
-		ProjectSpec:     request.ProjectSpec,
-		CompletionCheck: completionSnapshot,
-		TenantID:        tenantID, IdempotencyKey: idempotencyKey, RequestHash: hash,
+		ProjectSpec:          request.ProjectSpec,
+		Transaction:          command.Transaction,
+		StagePurpose:         request.StagePurpose,
+		ApprovedPlan:         request.ApprovedPlan,
+		FrozenProjectVersion: request.FrozenProjectVersion,
+		CompletionCheck:      completionSnapshot,
+		TenantID:             tenantID, IdempotencyKey: idempotencyKey, RequestHash: hash,
 		SubmissionChannel:        strings.TrimSpace(command.Channel),
 		PrincipalType:            principalType,
 		IntegrationApplicationID: integrationApplicationID,

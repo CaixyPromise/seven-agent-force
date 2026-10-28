@@ -11,6 +11,11 @@ export function artifactQueryKey(taskId: string, taskStatus?: string): readonly 
   return ['workforce', 'artifacts', taskId, taskStatus ?? ''];
 }
 
+// Refresh the Review snapshot when the Task changes state, including its final transition.
+export function reviewQueryKey(taskId: string, taskStatus?: string): readonly string[] {
+  return ['workforce', 'independent-review', taskId, taskStatus ?? ''];
+}
+
 export function isTaskTerminal(status?: string): boolean {
   return Boolean(status && terminalTaskStatuses.has(status));
 }

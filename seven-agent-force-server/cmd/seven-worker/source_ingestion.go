@@ -119,7 +119,7 @@ func (w *worker) restoreTaskInput(ctx context.Context, item taskdomain.WorkItem,
 		if err = w.restoreTaskReferences(ctx, item, workspace); err != nil {
 			return workspace, "", err
 		}
-		return workspace, item.TaskInput.SourceCommit, nil
+		return w.finishTaskInput(ctx, item, workspace)
 	}
 	if item.TaskInput.SourceKind != workspaceinputdomain.SourceKindSourceRevision || item.TaskInput.RepositoryBundleObjectKey == "" {
 		return workspace, "", errors.New("TASK_INPUT_MODE_INVALID")
@@ -149,7 +149,7 @@ func (w *worker) restoreTaskInput(ctx context.Context, item taskdomain.WorkItem,
 	if err = w.restoreTaskReferences(ctx, item, workspace); err != nil {
 		return workspace, "", err
 	}
-	return workspace, item.TaskInput.SourceCommit, nil
+	return w.finishTaskInput(ctx, item, workspace)
 }
 
 func initializeEmptyTaskWorkspace(ctx context.Context, repo, temp string, input taskdomain.TaskInputContract) error {

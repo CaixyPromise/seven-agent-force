@@ -917,3 +917,9 @@ func (s *Store) userPrincipal(ctx context.Context, actor int64) (int64, error) {
 	}
 	return id, nil
 }
+
+func (s *Store) PlanningRelease(ctx context.Context) (int64, error) {
+	var id int64
+	err := s.db.QueryRow(ctx, `SELECT r.id FROM workforce_result_processors p JOIN workforce_result_processor_releases r ON r.processor_id=p.id WHERE p.scope_type='SYSTEM' AND p.name='开发方案处理器' AND r.version='1.0.0' ORDER BY r.id DESC LIMIT 1`).Scan(&id)
+	return id, err
+}

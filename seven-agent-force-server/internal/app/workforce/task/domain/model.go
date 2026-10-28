@@ -198,6 +198,8 @@ func (s *HookPackageReleaseSnapshot) UnmarshalJSON(body []byte) error {
 }
 
 type ExecutionSnapshot struct {
+	StagePurpose               string                       `json:"stagePurpose,omitempty"`
+	ApprovedPlan               json.RawMessage              `json:"approvedPlan,omitempty"`
 	CompletionCheckInputDigest string                       `json:"completionCheckInputDigest,omitempty"`
 	CompletionCheck            *completioncheck.Input       `json:"completionCheck,omitempty"`
 	CompletionCheckDigest      string                       `json:"completionCheckDigest,omitempty"`

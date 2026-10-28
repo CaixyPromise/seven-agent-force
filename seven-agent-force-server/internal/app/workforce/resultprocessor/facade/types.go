@@ -27,3 +27,8 @@ type Execution struct {
 type Resolver interface {
 	ResolveExecution(ctx context.Context, tenantID int64, mode string, releaseID int64, parameters, configOverrides json.RawMessage) (Execution, error)
 }
+
+// PlanningResolver resolves the platform-owned immutable planning processor.
+type PlanningResolver interface {
+	PlanningRelease(context.Context) (int64, error)
+}

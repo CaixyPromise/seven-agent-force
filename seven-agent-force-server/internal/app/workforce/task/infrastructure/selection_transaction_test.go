@@ -365,3 +365,34 @@ func TestTaskSelectionRollbackAndReplay(t *testing.T) {
 		t.Fatalf("changed request did not conflict: %v", err)
 	}
 }
+
+func TestStageTaskUsesCallerTransactionAndRollsBack(t *testing.T) {
+	f := newSelectionFixture(t)
+	tx, err := f.db.Begin(f.ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(f.ctx)
+	f.params.Transaction = tx
+	f.params.StagePurpose = "IMPLEMENT"
+	f.params.ProjectSpec.ExecutionRequirements.StagePurpose = "IMPLEMENT"
+	f.params.ApprovedPlan = json.RawMessage(`{"contentDigest":"approved-digest","plan":{"title":"approved"}}`)
+	created, replay, err := f.store.Create(f.ctx, f.params)
+	if err != nil || replay || created.ID <= 0 {
+		t.Fatalf("create stage inside caller transaction: replay=%v err=%v", replay, err)
+	}
+	var count int
+	if err = tx.QueryRow(f.ctx, `SELECT COUNT(*) FROM workforce_tasks WHERE id=$1`, created.ID).Scan(&count); err != nil || count != 1 {
+		t.Fatalf("task unavailable inside tx: count=%d err=%v", count, err)
+	}
+	var purpose, digest string
+	if err = tx.QueryRow(f.ctx, `SELECT execution_requirements_json->>'stagePurpose',work_item_input_json->>'contentDigest' FROM workforce_tasks WHERE id=$1`, created.ID).Scan(&purpose, &digest); err != nil || purpose != "IMPLEMENT" || digest != "approved-digest" {
+		t.Fatalf("stage identity and approved plan not persisted: %q %q %v", purpose, digest, err)
+	}
+	if err = tx.Rollback(f.ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err = f.db.QueryRow(f.ctx, `SELECT COUNT(*) FROM workforce_tasks WHERE id=$1`, created.ID).Scan(&count); err != nil || count != 0 {
+		t.Fatalf("task survived rollback: count=%d err=%v", count, err)
+	}
+}

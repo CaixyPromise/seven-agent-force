@@ -87,3 +87,35 @@ func TestPostgreSQLDispatchPreservesProcessorExecutionPolicy(t *testing.T) {
 		})
 	}
 }
+
+func TestPostgreSQLDispatchPreservesWorkItemStageAndPlan(t *testing.T) {
+	pool := dispatchQATables(t, "workforce_tasks", "workforce_task_turns", "workforce_execution_nodes", "workforce_task_assignments", "workforce_result_processor_releases")
+	ctx := context.Background()
+	digest := strings.Repeat("a", 64)
+	for _, query := range []string{
+		`INSERT INTO workforce_tasks(id,tenant_id,created_by,idempotency_key,request_hash,repository_url,repository_ref,task_instruction,status,current_task_turn_id,result_processor_release_id,project_id,project_version_id,execution_requirements_json,execution_requirements_digest,work_item_input_json) VALUES(20,10,7,'qa-stage','qa','https://example.invalid/qa','main','qa','QUEUED',30,81,82,83,'{"stagePurpose":"IMPLEMENT"}','` + digest + `','{"contentDigest":"approved","plan":{"title":"Approved plan"}}')`,
+		`INSERT INTO workforce_task_turns(id,task_id,tenant_id,turn_number,instruction,execution_snapshot_digest,continuation_lineage_id,created_by,processor_release_id,processor_digest) VALUES(30,20,10,1,'qa','qa',30,7,81,'` + digest + `')`,
+		`INSERT INTO workforce_execution_nodes(id,task_id,task_turn_id,node_key,status,generation,execution_requirement_digest) VALUES(50,20,30,'qa','QUEUED',1,'` + digest + `')`,
+		`INSERT INTO workforce_result_processor_releases(id,processor_id,scope_type,revision_id,version,manifest_json,files_json,archive_object_key,archive_sha256,archive_size_bytes,published_by_principal_id) VALUES(81,80,'SYSTEM',79,'qa','{}','[]','fixture','` + digest + `',1,7)`,
+	} {
+		_, err := pool.Exec(ctx, query)
+		authoritySQLCheck(t, err)
+	}
+	recorder := &processorSnapshotRecorder{}
+	store := New(pool, nil)
+	store.SetAssignmentResolver(recorder)
+	_, _, err := store.DispatchOne(ctx, []int64{})
+	authoritySQLCheck(t, err)
+	if recorder.snapshot == nil || recorder.snapshot.StagePurpose != "IMPLEMENT" {
+		t.Fatal("stage purpose lost in dispatch")
+	}
+	var plan struct {
+		ContentDigest string `json:"contentDigest"`
+		Plan          struct {
+			Title string `json:"title"`
+		} `json:"plan"`
+	}
+	if err = json.Unmarshal(recorder.snapshot.ApprovedPlan, &plan); err != nil || plan.ContentDigest != "approved" || plan.Plan.Title != "Approved plan" {
+		t.Fatalf("approved plan lost in dispatch: %s %v", recorder.snapshot.ApprovedPlan, err)
+	}
+}

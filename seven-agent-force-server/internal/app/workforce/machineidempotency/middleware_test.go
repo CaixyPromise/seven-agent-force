@@ -1,6 +1,10 @@
 package machineidempotency
 
 import (
+	"bytes"
+	"encoding/json"
+	"github.com/CaixyPromise/seven-agent/force/internal/common/response"
+	"github.com/cloudwego/hertz/pkg/app"
 	"net/http"
 	"testing"
 )
@@ -42,5 +46,23 @@ func TestReplayableResponseStatusRejectsServerFailures(t *testing.T) {
 		if replayableResponseStatus(status) {
 			t.Fatalf("expected status %d to be released for retry", status)
 		}
+	}
+}
+
+func TestFailureReplacesPreviouslyWrittenSuccessfulResponse(t *testing.T) {
+	c := app.NewContext(0)
+	response.Success(c, map[string]any{"lease": "private-success-body"})
+	writeError(c, http.StatusServiceUnavailable, "MACHINE_IDEMPOTENCY_PERSIST_FAILED", "machine response could not be made replayable")
+	var body struct {
+		Code int `json:"code"`
+		Data struct {
+			ReasonCode string `json:"reasonCode"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(c.Response.Body(), &body); err != nil {
+		t.Fatalf("failure response must be a single valid JSON envelope: %v", err)
+	}
+	if c.Response.StatusCode() != http.StatusServiceUnavailable || body.Data.ReasonCode != "MACHINE_IDEMPOTENCY_PERSIST_FAILED" || bytes.Contains(c.Response.Body(), []byte("private-success-body")) {
+		t.Fatal("failure leaked or appended to previous success response")
 	}
 }

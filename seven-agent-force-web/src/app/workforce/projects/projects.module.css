@@ -885,3 +885,14 @@
     width: 100%;
   }
 }
+
+/* The layout already supplies the mobile gutter on work item screens. */
+@media (max-width: 767px) {
+  :global(.ant-pro-page-container-children-container):has(:global(.workforce-work-item-page)) {
+    padding-inline: 0;
+  }
+
+  :global(.ant-pro-page-container):has(:global(.workforce-work-item-page)) :global(.ant-page-header) {
+    padding-inline: 0;
+  }
+}

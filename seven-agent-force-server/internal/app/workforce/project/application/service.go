@@ -432,6 +432,24 @@ func (s *Service) CompileForTask(ctx context.Context, tenantID, projectID int64,
 	if err != nil {
 		return projectfacade.FrozenTaskSpec{}, err
 	}
+	return s.compileProjectTask(ctx, tenantID, project, additions)
+}
+
+func (s *Service) CompileForTaskVersion(ctx context.Context, tenant, projectID, version int64, additions projectfacade.TaskAdditions) (projectfacade.FrozenTaskSpec, error) {
+	reader, ok := s.repository.(interface {
+		GetVersion(context.Context, int64, int64, int64) (domain.Project, error)
+	})
+	if !ok {
+		return projectfacade.FrozenTaskSpec{}, domain.ErrInvalid
+	}
+	project, err := reader.GetVersion(ctx, tenant, projectID, version)
+	if err != nil {
+		return projectfacade.FrozenTaskSpec{}, err
+	}
+	return s.compileProjectTask(ctx, tenant, project, additions)
+}
+
+func (s *Service) compileProjectTask(ctx context.Context, tenantID int64, project domain.Project, additions projectfacade.TaskAdditions) (projectfacade.FrozenTaskSpec, error) {
 	if project.Status != projectfacade.StatusActive {
 		return projectfacade.FrozenTaskSpec{}, domain.ErrArchived
 	}
@@ -477,7 +495,7 @@ func (s *Service) CompileForTask(ctx context.Context, tenantID, projectID int64,
 	requirementsJSON, _ := json.Marshal(requirements)
 	requirementsDigest := digest(requirementsJSON)
 	return projectfacade.FrozenTaskSpec{
-		ProjectID: project.ID, ProjectVersionID: project.VersionID,
+		ProjectID: project.ID, ProjectVersionID: project.VersionID, HookReleaseIDs: append([]int64(nil), project.HookReleaseIDs...),
 		ExecutionRequirements: requirements, ExecutionRequirementsDigest: requirementsDigest, ProjectName: project.Name, ProjectKind: project.Kind,
 		Instruction: additions.Instruction, Name: additions.Name, Tags: append([]string(nil), additions.Tags...), ReferenceAssetIDs: append(sharedtransport.Int64Slice(nil), additions.ReferenceAssetIDs...),
 		WorkspaceSourceRevisionID: sourceRevisionID, CompletionCheck: completion, ResultProcessorReleaseID: processorReleaseID,

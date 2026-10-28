@@ -23,6 +23,7 @@ const (
 )
 
 type ExecutionRequirements struct {
+	StagePurpose             string   `json:"stagePurpose,omitempty"`
 	ExecutionKind            string   `json:"executionKind"`
 	AdapterCapabilities      []string `json:"adapterCapabilities"`
 	EnvironmentCapabilities  []string `json:"environmentCapabilities"`
@@ -74,6 +75,7 @@ type NotificationPolicy struct {
 }
 
 type FrozenTaskSpec struct {
+	HookReleaseIDs              []int64                    `json:"-"`
 	ProjectID                   int64                      `json:"projectId,string"`
 	ProjectVersionID            int64                      `json:"projectVersionId,string"`
 	ExecutionRequirements       ExecutionRequirements      `json:"executionRequirements"`
@@ -107,4 +109,10 @@ type RequirementsCompiler interface {
 type CompiledExecutionRequirements struct {
 	ProjectVersionID int64
 	Requirements     ExecutionRequirements
+}
+
+// VersionTaskCompiler is reserved for server-owned stage orchestration. Callers
+// cannot override repository credentials, completion rules or delivery targets.
+type VersionTaskCompiler interface {
+	CompileForTaskVersion(context.Context, int64, int64, int64, TaskAdditions) (FrozenTaskSpec, error)
 }

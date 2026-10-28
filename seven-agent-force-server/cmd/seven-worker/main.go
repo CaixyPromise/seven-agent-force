@@ -191,6 +191,7 @@ func main() {
 	capabilities, _ := json.Marshal(map[string]any{
 		"workerProtocol": "seven.worker/v1", "imageContracts": []string{"seven.worker-image/v1"}, "attemptControl": []int{1}, "supervisorControl": []int{2},
 		"gitDelivery": true, "customDelivery": true, "deliveryEgressEnforced": egressReady,
+		"planningSource":            "v1",
 		"independentReviewConsumer": map[bool]string{true: "v1", false: ""}[cfg.Reviewer.Enabled],
 	})
 	registration, err := client.Register(ctx, control.RegisterInput{
@@ -1099,6 +1100,9 @@ func (w *worker) process(ctx context.Context, message dispatchdomain.AssignmentM
 			return false, w.retryInfrastructureLoss(ctx, item, attempt, dispatchdomain.ReasonWorkspacePrepareInfrastructure, err)
 		}
 		return false, w.fail(ctx, attempt, "WORKSPACE_PREPARE_FAILED", err)
+	}
+	if err = w.ensurePlanningSource(ctx, item, workspace); err != nil {
+		return false, w.fail(ctx, attempt, "PLANNING_SOURCE_PREPARE_FAILED", err)
 	}
 	item.ResolvedBaseCommit = baseCommit
 	if err := nextEvent("workspace.ready", map[string]any{"baseCommit": baseCommit}); err != nil {

@@ -30,6 +30,7 @@ func systemProcessorAssets() []builtinAsset {
 	return []builtinAsset{
 		standardCodeProcessor(),
 		reportProcessor(),
+		planningProcessor(),
 	}
 }
 
@@ -85,4 +86,17 @@ def process(context):
     )
 `}},
 	}
+}
+
+func planningProcessor() builtinAsset {
+	m := baseManifest("开发方案处理器")
+	m.Version = "1.0.0"
+	return builtinAsset{Name: "开发方案处理器", Category: "规划", Description: "导出待人工确认的开发方案", Version: "1.0.0", Manifest: m, Files: []processor.SourceFile{{Path: "processor.py", Mode: 0644, Content: `from seven_workforce_runtime.processor import pass_result, ask_agent, workspace_path
+
+def process(context):
+    check = context.process.run(["test", "-s", "plan.json"], cwd=context.workspace.repo)
+    if check.returncode != 0:
+        return ask_agent(reason_code="PLAN_MISSING", message="请生成非空 plan.json 方案。")
+    return pass_result(message="方案已生成，等待人工确认。", outputs=[workspace_path(name="development-plan", path="plan.json", storage="IMMEDIATE")])
+`}}}
 }

@@ -105,6 +105,20 @@ export const routes: AppRoute[] = [
     requiredPermissions: ['workforce:task:create'],
   },
   {
+    path: '/workforce/projects/:projectId/work-items/new',
+    name: '新建工作单',
+    component: './Workforce/WorkItemCreate',
+    hideInMenu: true,
+    requiredPermissions: ['workforce:work-item:create'],
+  },
+  {
+    path: '/workforce/work-items/:workItemId',
+    name: '工作单详情',
+    component: './Workforce/WorkItemDetail',
+    hideInMenu: true,
+    requiredPermissions: ['workforce:work-item:query'],
+  },
+  {
     path: '/workforce/tasks/new',
     name: '新建任务',
     component: './Workforce/TaskCreate',

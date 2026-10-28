@@ -115,7 +115,7 @@ import { savedInteractionProgress } from '@/api/taskStatusContract';
 import { getProject } from '@/api/projectController';
 import { getTaskCompletionCheck } from '@/api/completionCheckController';
 import { getIndependentReview } from '@/api/independentReviewController';
-import { artifactQueryKey, completionRefreshInterval, deliveryRefreshInterval, notificationRefreshInterval, reviewRefreshInterval, taskRefreshInterval } from '../taskQueryPolicy';
+import { artifactQueryKey, completionRefreshInterval, deliveryRefreshInterval, notificationRefreshInterval, reviewQueryKey, reviewRefreshInterval, taskRefreshInterval } from '../taskQueryPolicy';
 
 const { Text, Title } = Typography;
 
@@ -205,7 +205,7 @@ export default function WorkforceTaskDetailPage() {
 		refetchInterval: (state) => completionRefreshInterval(taskQuery.data?.status, state.state.data?.currentResult),
 	});
 	const workflowReviewQuery = useQuery({
-		queryKey: ['workforce', 'independent-review', decodedTaskId],
+		queryKey: reviewQueryKey(decodedTaskId, taskQuery.data?.status),
 		queryFn: () => getIndependentReview(decodedTaskId),
 		enabled: Boolean(decodedTaskId && workspaceTab === 'workflow'),
 		refetchInterval: (state) => reviewRefreshInterval(taskQuery.data?.status, state.state.data?.status, state.state.data?.required),

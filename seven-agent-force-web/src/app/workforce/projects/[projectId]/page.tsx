@@ -32,6 +32,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { archiveProject, getProject, listProjectTasks, updateProject } from '@/api/projectController';
 import { getProjectAnalytics } from '@/api/taskAnalyticsController';
+import { listWorkItems } from '@/api/workItemController';
 import { projectFeedback, type ProjectDraft, type ProjectTaskSummary, type WorkforceProject } from '@/api/projectContract';
 import { usePermissionAccess } from '@/hooks/auth';
 import ProjectForm from '../_components/ProjectForm';
@@ -55,10 +56,12 @@ export default function ProjectDetailPage() {
   const queryClient = useQueryClient();
   const { message, modal } = App.useApp();
   const canCreateTask = usePermissionAccess('workforce:task:create');
+  const canCreateWorkItem = usePermissionAccess('workforce:work-item:create');
+  const canQueryWorkItem = usePermissionAccess('workforce:work-item:query');
   const canUpdateProject = usePermissionAccess('workforce:task:metadata:update');
   const [editing, setEditing] = useState(false);
   const [analyticsRange,setAnalyticsRange]=useState<'7d'|'30d'|'90d'>('30d');
-  const activeTab=['overview','tasks','profile','rules'].includes(searchParams.get('tab')??'')?searchParams.get('tab')!:'overview';
+  const activeTab=['overview','tasks','work-items','profile','rules'].includes(searchParams.get('tab')??'')?searchParams.get('tab')!:'overview';
   const taskView=searchParams.get('view')??undefined;const taskFrom=searchParams.get('from')??undefined;const taskTo=searchParams.get('to')??undefined;
   const project = useQuery({
     queryKey: ['workforce', 'project', projectId],
@@ -73,6 +76,7 @@ export default function ProjectDetailPage() {
     enabled: Boolean(projectId),
   });
   const analytics=useQuery({queryKey:['workforce','project',projectId,'analytics',analyticsRange],queryFn:()=>getProjectAnalytics(projectId,analyticsRange),enabled:Boolean(projectId)});
+  const workItems=useQuery({queryKey:['workforce','project',projectId,'work-items'],queryFn:()=>listWorkItems(projectId),enabled:Boolean(projectId)&&canQueryWorkItem,refetchInterval:activeTab==='work-items'?5000:false});
   const update = useMutation({
     mutationFn: (input: ProjectDraft) => updateProject(projectId, project.data!.versionId, input),
     onSuccess: async (updated) => {
@@ -130,6 +134,7 @@ export default function ProjectDetailPage() {
           </Space>
         </Flex>
         <Flex gap={8}>
+          {current.status === 'ACTIVE' && canCreateTask && canCreateWorkItem && <Button onClick={() => navigate(`/workforce/projects/${encodeURIComponent(current.id)}/work-items/new`)}>先出方案再实施</Button>}
           {current.status === 'ACTIVE' && canCreateTask && <Button type="primary" icon={<PlusOutlined />} onClick={() => navigate(taskCreatePath)}>发起任务</Button>}
           {current.status === 'ACTIVE' && canUpdateProject && <Button icon={<EditOutlined />} onClick={() => setEditing(true)}>编辑</Button>}
           {menuItems.length > 0 && <Dropdown menu={{ items: menuItems, onClick: handleMenu }} trigger={['click']}><Button aria-label="更多项目操作" icon={<MoreOutlined />} /></Dropdown>}
@@ -149,6 +154,7 @@ export default function ProjectDetailPage() {
       items={[
         { key: 'overview', label: '概览', children: <ProjectDashboard range={analyticsRange} onRange={setAnalyticsRange} query={analytics} onFilter={(value)=>{const copy=new URLSearchParams(searchParams);copy.set('tab','tasks');if(value.view&&value.view!=='all')copy.set('view',value.view);else copy.delete('view');if(value.from)copy.set('from',value.from);else copy.delete('from');if(value.to)copy.set('to',value.to);else copy.delete('to');setSearchParams(copy,{replace:true})}} /> },
         { key: 'tasks', label: '任务', children: <ProjectTasks project={current} tasks={tasks.data?.pages.flatMap((page) => page.items) ?? []} loading={tasks.isLoading} error={tasks.isError} loadingMore={tasks.isFetchingNextPage} hasMore={Boolean(tasks.hasNextPage)} canCreate={canCreateTask} onRetry={() => tasks.refetch()} onLoadMore={() => tasks.fetchNextPage()} onCreate={() => navigate(taskCreatePath)} /> },
+        ...(canQueryWorkItem ? [{ key: 'work-items', label: '开发工作单', children: <Card title="开发工作单">{workItems.isLoading ? <Skeleton active /> : workItems.isError ? <Result status="warning" title="工作单暂时无法加载" extra={<Button onClick={() => workItems.refetch()}>重试</Button>} /> : !workItems.data?.length ? <Empty description="暂无工作单" /> : <Space orientation="vertical" size={12} style={{ width:'100%' }}>{workItems.data.map((item) => <Card key={item.id} size="small"><Flex justify="space-between" gap={12} wrap><Link to={`/workforce/work-items/${encodeURIComponent(item.id)}`}>{item.name}</Link><Tag>{({PLANNING:'生成方案中',AWAITING_PLAN_APPROVAL:'待确认方案',IMPLEMENTING:'实施中',NEEDS_ATTENTION:'需要处理',SUCCEEDED:'已完成',CANCELLING:'正在停止',CANCELLED:'已停止'} as Record<string,string>)[item.status] ?? item.status}</Tag></Flex></Card>)}</Space>}</Card> }] : []),
         { key: 'profile', label: '项目资料', children: <ProjectProfile project={current} /> },
         { key: 'rules', label: '自动化', children: <ProjectRules project={current} /> },
       ]}

@@ -113,7 +113,7 @@ func TestProjectStorePersistsDirectRepositoryShape(t *testing.T) {
 		ProviderType: "GITLAB", Scheme: "https", Host: "gitlab.example.test", Port: 443,
 		Path: "group/repository.git", DisplayURL: "https://gitlab.example.test/group/repository.git",
 		WebURL: "https://gitlab.example.test/group/repository", DefaultRefName: "main",
-		CredentialCiphertext: "ciphertext", CredentialEDEK: "edek", CredentialWrapKeyRef: "test-wrap-key",
+		CredentialCiphertext: "Y2lwaGVydGV4dA==", CredentialEDEK: "ZWRlaw==", CredentialWrapKeyRef: "test-wrap-key",
 		CredentialVersion: 1, ConfigDigest: strings.Repeat("a", 64), SourceState: "PREPARING",
 		Capabilities: domain.RepositoryCapabilities{Read: true, Push: true, DraftReview: true}, LastCheckStatus: "VERIFIED",
 	}
@@ -127,7 +127,7 @@ func TestProjectStorePersistsDirectRepositoryShape(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create CODEBASE Project: %v", err)
 	}
-	if codebase.RepositoryDisplayURL != resolved.DisplayURL || codebase.RepositoryCredentialCiphertext != "ciphertext" || codebase.RepositorySourceState != "PREPARING" {
+	if codebase.RepositoryDisplayURL != resolved.DisplayURL || codebase.RepositoryCredentialCiphertext != resolved.CredentialCiphertext || codebase.RepositorySourceState != "PREPARING" {
 		t.Fatalf("CODEBASE repository did not round-trip: %#v", codebase)
 	}
 
@@ -140,6 +140,17 @@ func TestProjectStorePersistsDirectRepositoryShape(t *testing.T) {
 	}
 	if updated.VersionID == codebase.VersionID || updated.RepositorySourceState != "READY" || updated.Name != codebaseRequest.Name {
 		t.Fatalf("unexpected updated CODEBASE Project: %#v", updated)
+	}
+	oldVersion, err := store.GetVersion(ctx, tenantID, codebase.ID, codebase.VersionID)
+	if err != nil || oldVersion.VersionID != codebase.VersionID || oldVersion.Name != "Codebase Store Test" {
+		t.Fatalf("frozen historical ProjectVersion could not be read: %v", err)
+	}
+	target, err := store.GetProjectRepository(ctx, tenantID, codebase.ID, codebase.VersionID)
+	if err != nil || target.ConfigDigest != resolved.ConfigDigest {
+		t.Fatalf("frozen historical repository could not be read: %v", err)
+	}
+	if _, err := store.GetVersion(ctx, tenantID+1, codebase.ID, codebase.VersionID); !errors.Is(err, domain.ErrNotFound) {
+		t.Fatalf("historical ProjectVersion crossed tenant boundary: %v", err)
 	}
 	var oldName string
 	if err = pool.QueryRow(ctx, `SELECT name FROM workforce_project_versions WHERE id=$1`, codebase.VersionID).Scan(&oldName); err != nil {

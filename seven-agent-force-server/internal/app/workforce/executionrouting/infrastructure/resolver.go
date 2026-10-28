@@ -219,7 +219,7 @@ WHERE tenant_id=$1 AND id=$2 AND status='ACTIVE' AND protocol=$3`, node.TenantID
 	} else if err != nil {
 		return routingfacade.ResolvedAssignment{}, true, "", err
 	}
-	worker, wait, err := r.selectContinuationWorker(ctx, tx, result.RuntimeReleaseID, result.RuntimeImageDigest, result.WorkerImageContract, result.Snapshot.ProviderProxyImageDigest, sourceWorkerID, sourceWorkerInstance)
+	worker, wait, err := r.selectContinuationWorker(ctx, tx, result.RuntimeReleaseID, result.RuntimeImageDigest, result.WorkerImageContract, result.Snapshot.ProviderProxyImageDigest, sourceWorkerID, sourceWorkerInstance, result.Snapshot.StagePurpose == "PLAN")
 	if err != nil || wait != "" {
 		return routingfacade.ResolvedAssignment{}, true, wait, err
 	}
@@ -236,7 +236,7 @@ WHERE tenant_id=$1 AND id=$2 AND status='ACTIVE' AND protocol=$3`, node.TenantID
 	return result, true, "", nil
 }
 
-func (r *Resolver) selectContinuationWorker(ctx context.Context, tx pgx.Tx, runtimeReleaseID int64, imageDigest, imageContract, providerProxyImage string, sourceWorkerID int64, sourceWorkerInstance string) (runtimeCandidate, string, error) {
+func (r *Resolver) selectContinuationWorker(ctx context.Context, tx pgx.Tx, runtimeReleaseID int64, imageDigest, imageContract, providerProxyImage string, sourceWorkerID int64, sourceWorkerInstance string, planning bool) (runtimeCandidate, string, error) {
 	var admittedImageDigest string
 	err := tx.QueryRow(ctx, `SELECT image_digest FROM workforce_harness_releases
 WHERE id=$1 AND status='ACTIVE' AND scheduling_scope='PRODUCTION' AND execution_kinds_json ? 'AGENT_ATTEMPT'`, runtimeReleaseID).Scan(&admittedImageDigest)
@@ -257,10 +257,11 @@ JOIN workforce_worker_sessions s ON s.instance_id=w.current_instance_id
 JOIN workforce_worker_images wi ON wi.worker_id=w.id AND wi.instance_id=w.current_instance_id AND wi.role='attempt'
 WHERE w.desired_state='ENABLED' AND w.decommissioned_at IS NULL AND s.ended_at IS NULL
   AND s.last_heartbeat_at>=CURRENT_TIMESTAMP-INTERVAL '35 seconds' AND s.consumer_state='CONSUMING' AND s.docker_ready
+  AND ($3::boolean=false OR s.capabilities_json @> '{"planningSource":"v1"}'::jsonb)
   AND wi.image_digest=$1 AND wi.contract_version=$2 AND wi.admission_status='ADMITTED' AND wi.presence_status='PRESENT'
   AND wi.scheduling_scope='PRODUCTION' AND wi.execution_kinds_json ? 'AGENT_ATTEMPT'
 ORDER BY wi.scheduling_priority,w.id
-FOR UPDATE OF w SKIP LOCKED`, imageDigest, imageContract)
+FOR UPDATE OF w SKIP LOCKED`, imageDigest, imageContract, planning)
 	if err != nil {
 		return runtimeCandidate{}, "", err
 	}
@@ -552,11 +553,12 @@ JOIN workforce_worker_sessions s ON s.instance_id=w.current_instance_id
 JOIN workforce_worker_images wi ON wi.worker_id=w.id AND wi.instance_id=w.current_instance_id AND wi.role='attempt'
 WHERE w.desired_state='ENABLED' AND w.decommissioned_at IS NULL AND s.ended_at IS NULL
   AND s.last_heartbeat_at>=CURRENT_TIMESTAMP-INTERVAL '35 seconds' AND s.consumer_state='CONSUMING' AND s.docker_ready
+  AND ($3::boolean=false OR s.capabilities_json @> '{"planningSource":"v1"}'::jsonb)
   AND wi.image_digest=$1 AND wi.contract_version=$2
   AND wi.admission_status='ADMITTED' AND wi.presence_status='PRESENT' AND wi.scheduling_scope='PRODUCTION'
   AND wi.execution_kinds_json ? 'AGENT_ATTEMPT'
 ORDER BY wi.scheduling_priority,w.id
-FOR UPDATE OF w SKIP LOCKED`, selected.imageDigest, selected.contract)
+FOR UPDATE OF w SKIP LOCKED`, selected.imageDigest, selected.contract, requirements.StagePurpose == "PLAN")
 	if err != nil {
 		return runtimeCandidate{}, "", err
 	}

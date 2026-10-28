@@ -1,6 +1,10 @@
 package workforce
 
 import (
+	workitemapp "github.com/CaixyPromise/seven-agent/force/internal/app/workforce/workitem/application"
+	workitemcontroller "github.com/CaixyPromise/seven-agent/force/internal/app/workforce/workitem/controller"
+	workiteminfra "github.com/CaixyPromise/seven-agent/force/internal/app/workforce/workitem/infrastructure"
+
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
@@ -108,6 +112,7 @@ const (
 )
 
 type Module struct {
+	workitemHandler         *workitemcontroller.Handler
 	taskHandler             *taskcontroller.Handler
 	analyticsHandler        *analyticscontroller.Handler
 	taskNotificationHandler *tasknotificationcontroller.Handler
@@ -352,6 +357,10 @@ func Install(deps bootstrapruntime.ModuleDeps, integrations Dependencies) (*Modu
 		taskNotificationService.BindPlatformReadiness(readiness)
 	}
 	taskNotificationHandler := tasknotificationcontroller.New(taskNotificationService)
+	workitemStore := workiteminfra.New(db, deps.IDGen, principalinfra.NewResolver())
+	continuationService.SetWorkItemMembership(workitemStore)
+	workitemService := workitemapp.New(workitemStore, service, processorService, deps.IDGen, invocationinfra.NewStore(db))
+	workitemHandler := workitemcontroller.New(workitemService)
 	idempotency := machineidem.New(db, registryService, deps.Security.SecretValue)
 	workerHandler.SetMachineIdempotency(idempotency)
 	machineHandler := dispatchcontroller.NewMachine(dispatchService, dispatchStore, store, registryService, postprocessStore, processorService, continuationService, deliveryMachine, idempotency, deps.IDGen)
@@ -386,6 +395,9 @@ func Install(deps bootstrapruntime.ModuleDeps, integrations Dependencies) (*Modu
 			case <-moduleCtx.Done():
 				return
 			case <-ticker.C:
+				if err := workitemService.Reconcile(moduleCtx); err != nil && moduleCtx.Err() == nil {
+					deps.Logger.Warn("reconcile development work item", zap.Error(err))
+				}
 				if err := projectService.ReconcileSourcePreparations(moduleCtx, 32); err != nil && moduleCtx.Err() == nil {
 					deps.Logger.Warn("reconcile Project source preparation", zap.Error(err))
 				}
@@ -452,7 +464,7 @@ func Install(deps bootstrapruntime.ModuleDeps, integrations Dependencies) (*Modu
 		}
 	}()
 	go imageadmission.RunWorkerEvidenceAdopter(moduleCtx, db, runtimeCfg.Harness, deps.IDGen)
-	return &Module{taskHandler: taskHandler, analyticsHandler: analyticsHandler, projectHandler: projectHandler, completionHandler: completionHandler, interactionHandler: interactionHandler, executionAccessHandler: executionAccessHandler, taskNotificationHandler: taskNotificationHandler, openIntegrationHandler: openIntegrationHandler, providerHandler: providerHandler, hookHandler: hookHandler, workerHandler: workerHandler, machineHandler: machineHandler, invocationHandler: invocationHandler, processorHandler: processorHandler, reviewRunHandler: reviewRunHandler, processorService: processorService, continuationHandler: continuationHandler, deliveryHandler: deliveryHandler, deliveryService: deliveryService, deliveryMachine: deliveryMachine, reviewCoordinator: reviewCoordinator, workspaceInputModule: workspaceInputModule, db: db, localMode: string(deps.Config.Platform.Mode) == "local", cancel: cancel}, nil
+	return &Module{workitemHandler: workitemHandler, taskHandler: taskHandler, analyticsHandler: analyticsHandler, projectHandler: projectHandler, completionHandler: completionHandler, interactionHandler: interactionHandler, executionAccessHandler: executionAccessHandler, taskNotificationHandler: taskNotificationHandler, openIntegrationHandler: openIntegrationHandler, providerHandler: providerHandler, hookHandler: hookHandler, workerHandler: workerHandler, machineHandler: machineHandler, invocationHandler: invocationHandler, processorHandler: processorHandler, reviewRunHandler: reviewRunHandler, processorService: processorService, continuationHandler: continuationHandler, deliveryHandler: deliveryHandler, deliveryService: deliveryService, deliveryMachine: deliveryMachine, reviewCoordinator: reviewCoordinator, workspaceInputModule: workspaceInputModule, db: db, localMode: string(deps.Config.Platform.Mode) == "local", cancel: cancel}, nil
 }
 
 type continuationKeyWrapper struct{ service secretvalueinfra.Service }
@@ -616,6 +628,9 @@ func (m *Module) Descriptor() core.ModuleDescriptor {
 }
 
 func (m *Module) Mount(router route.IRouter) {
+	if m.workitemHandler != nil {
+		m.workitemHandler.Mount(router, m.wrapPermission)
+	}
 	if m.completionHandler != nil {
 		m.completionHandler.Mount(router, m.wrapPermission)
 	}

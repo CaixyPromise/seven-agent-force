@@ -217,7 +217,8 @@ SELECT n.id,n.task_id,n.task_turn_id,n.generation,n.execution_requirement_digest
          'secretVersionIdentities',tr.secret_version_identities,
          'resultProcessorParameters',tr.parameters_json,
          'executionDeadlineSeconds',COALESCE(t.execution_timeout_seconds,0),
-         'isolationProfile','seven.worker-image/v1')
+		 'isolationProfile','seven.worker-image/v1') ||
+		 jsonb_strip_nulls(jsonb_build_object('stagePurpose',NULLIF(t.execution_requirements_json->>'stagePurpose',''),'approvedPlan',t.work_item_input_json))
 FROM workforce_execution_nodes n
 JOIN workforce_tasks t ON t.id=n.task_id
 JOIN workforce_task_turns tr ON tr.id=n.task_turn_id AND tr.task_id=t.id
@@ -577,6 +578,9 @@ WHERE t.id=$2 AND attempt.assignment_selection_digest=assignment.selection_diges
 	}
 	if err = json.Unmarshal(snapshotJSON, &item.ExecutionSnapshot); err != nil {
 		return domain.ExecutionContract{}, err
+	}
+	if item.ExecutionSnapshot.StagePurpose == "PLAN" {
+		item.AllowedAdapterTools = []string{}
 	}
 	var completionJSON, completionRefs []byte
 	if err = q.QueryRow(ctx, `SELECT COALESCE(completion_check_json,'null'::jsonb),COALESCE(completion_check_digest,''),COALESCE(completion_check_input_digest,''),COALESCE(completion_check_references_json,'[]'::jsonb) FROM workforce_task_turns WHERE id=$1 AND tenant_id=$2 AND task_id=$3`, item.TaskTurnID, item.TenantID, item.TaskID).Scan(&completionJSON, &item.CompletionCheckDigest, &item.CompletionCheckInputDigest, &completionRefs); err != nil {

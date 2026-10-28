@@ -220,6 +220,10 @@ func machineWorkerID(c *app.RequestContext, body []byte) int64 {
 }
 
 func writeError(c *app.RequestContext, status int, code, message string) {
+	// A downstream handler may already have written a success body before
+	// replay persistence fails. Replace it, so the machine client receives one
+	// valid failure envelope and no stale success data.
+	c.Response.ResetBody()
 	var err *apperrors.AppError
 	switch status {
 	case http.StatusBadRequest:

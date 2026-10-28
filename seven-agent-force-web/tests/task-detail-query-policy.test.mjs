@@ -99,3 +99,27 @@ test('delivery changes refresh the terminal task pending summary as well as deli
   assert.match(callback, /queryKey: \['workforce', 'task-deliveries', decodedTaskId\]/);
   assert.match(callback, /queryKey: \['workforce', 'task', decodedTaskId\]/);
 });
+
+test('terminal task transition fetches the final independent review before polling stops', async () => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } });
+  let status = 'RUNNING';
+  let requests = 0;
+  const queryFn = async () => { requests++; return { status, required: true }; };
+  const observer = new QueryObserver(client, { queryKey: policy.reviewQueryKey('9007199254740993', 'REVIEWING'), queryFn, refetchInterval: false });
+  const stop = observer.subscribe(() => {});
+  try {
+    await observer.refetch();
+    assert.equal(observer.getCurrentResult().data.status, 'RUNNING');
+    const before = requests;
+    status = 'PASSED';
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { unsubscribe(); reject(new Error('final review did not refresh')); }, 1000);
+      const unsubscribe = observer.subscribe((result) => {
+        if (result.data?.status === 'PASSED') { clearTimeout(timer); unsubscribe(); resolve(); }
+      });
+      observer.setOptions({ queryKey: policy.reviewQueryKey('9007199254740993', 'SUCCEEDED'), queryFn, refetchInterval: false });
+    });
+    assert.equal(requests, before + 1);
+    assert.equal(policy.reviewRefreshInterval('SUCCEEDED', 'PASSED', true), false);
+  } finally { stop(); client.clear(); }
+});

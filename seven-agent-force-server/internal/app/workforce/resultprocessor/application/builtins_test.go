@@ -10,10 +10,10 @@ import (
 
 func TestBuiltinRuntimeSDKPublishesOnlySystemProcessors(t *testing.T) {
 	assets := systemProcessorAssets()
-	if len(assets) != 2 {
+	if len(assets) != 3 {
 		t.Fatalf("system Processor catalog must stay small, got %d", len(assets))
 	}
-	wantNames := map[string]bool{OfficialDefaultProcessor: true, ReportProcessor: true}
+	wantNames := map[string]bool{OfficialDefaultProcessor: true, ReportProcessor: true, "开发方案处理器": true}
 	seen := make(map[string]bool)
 	for _, asset := range assets {
 		t.Run(asset.Name, func(t *testing.T) {
@@ -21,7 +21,7 @@ func TestBuiltinRuntimeSDKPublishesOnlySystemProcessors(t *testing.T) {
 				t.Fatal("system Processor name is unexpected or duplicated")
 			}
 			seen[asset.Name] = true
-			if asset.Version != builtinRuntimeSDKVersion || asset.Manifest.Version != asset.Version {
+			if (asset.Name != "开发方案处理器" && asset.Version != builtinRuntimeSDKVersion) || asset.Manifest.Version != asset.Version {
 				t.Fatal("system Processor release and manifest versions must match")
 			}
 			archive, digest, err := processor.CanonicalArchive(asset.Manifest, asset.Files)
@@ -64,7 +64,7 @@ func TestBuiltinRuntimeSDKArchivesPreservePublishedSDKImports(t *testing.T) {
 			if manifest.Version != asset.Version || len(files) != 1 || files[0].Path != "processor.py" {
 				t.Fatal("published archive identity or entrypoint differs from builtin")
 			}
-			if manifest.Version != "2.0.0" || !strings.Contains(files[0].Content, "from seven_workforce_runtime.processor import ") || strings.Contains(files[0].Content, "from seven_agent.force.processor import ") {
+			if (asset.Name != "开发方案处理器" && manifest.Version != "2.0.0") || !strings.Contains(files[0].Content, "from seven_workforce_runtime.processor import ") || strings.Contains(files[0].Content, "from seven_agent.force.processor import ") {
 				t.Fatal("published 2.0.0 archive SDK imports changed during the product rename")
 			}
 		})

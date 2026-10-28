@@ -11,7 +11,12 @@ test('each analytics page uses one aggregate query and no analytics polling', ()
   assert.equal((projects.match(/getProjectListAnalytics\(/g) ?? []).length, 1);
   assert.equal((detail.match(/getProjectAnalytics\(/g) ?? []).length, 1);
   assert.equal((tasks.match(/getTaskAnalytics\(/g) ?? []).length, 1);
-  for (const source of [projects, detail, tasks]) assert.doesNotMatch(source, /refetchInterval/);
+  for (const source of [projects, detail, tasks]) {
+    const query = source.match(/const analytics\s*=\s*useQuery\([\s\S]*?\);/);
+    assert.ok(query, 'analytics query is present');
+    assert.doesNotMatch(query[0], /refetchInterval/);
+  }
+  assert.match(detail, /refetchInterval:activeTab==='work-items'\?5000:false/);
 });
 
 test('analytics drill-down writes server list filters into the URL', () => {

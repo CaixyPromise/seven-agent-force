@@ -38,15 +38,36 @@ func (a *executionAccessAuthority) AuthorizeUser(ctx context.Context, tx pgx.Tx,
 	return executionaccess.Target{TenantID: t.TenantID, TaskID: t.TaskID, TaskTurnID: t.TaskTurnID, AttemptID: t.AttemptID, AdapterSessionGeneration: t.AdapterSessionGeneration, PrincipalID: t.PrincipalID, Capabilities: append([]string(nil), t.Capabilities...)}, nil
 }
 
-func (a *executionAccessAuthority) ValidateMachine(ctx context.Context, tx pgx.Tx, m executionaccess.Machine, _ string) (executionaccess.Target, error) {
+func (a *executionAccessAuthority) ValidateMachine(ctx context.Context, tx pgx.Tx, m executionaccess.Machine, action string) (executionaccess.Target, error) {
 	if m.ColdResumeOperationID > 0 {
-		return a.validateColdResume(ctx, tx, m)
+		t, err := a.validateColdResume(ctx, tx, m)
+		if err != nil {
+			return t, err
+		}
+		return t, checkPlanningOperation(ctx, tx, t.AttemptID, action)
 	}
 	t, err := a.base.Validate(ctx, tx, interaction.Machine{TenantID: m.TenantID, TaskID: m.TaskID, TaskTurnID: m.TaskTurnID, WorkerID: m.WorkerID, InstanceID: m.InstanceID, HostBootID: m.HostBootID, AttemptID: m.AttemptID, Generation: m.Generation, OwnerEpoch: m.OwnerEpoch, AdapterSessionGeneration: m.AdapterSessionGeneration, ExecutionLease: m.ExecutionLease})
 	if err != nil {
 		return executionaccess.Target{}, err
 	}
-	return executionaccess.Target{TenantID: t.TenantID, TaskID: t.TaskID, TaskTurnID: t.TaskTurnID, AttemptID: t.AttemptID, AdapterSessionGeneration: t.AdapterSessionGeneration, PrincipalID: t.PrincipalID, WorkerID: m.WorkerID, OwnerEpoch: m.OwnerEpoch, Capabilities: append([]string(nil), t.Capabilities...)}, nil
+	target := executionaccess.Target{TenantID: t.TenantID, TaskID: t.TaskID, TaskTurnID: t.TaskTurnID, AttemptID: t.AttemptID, AdapterSessionGeneration: t.AdapterSessionGeneration, PrincipalID: t.PrincipalID, WorkerID: m.WorkerID, OwnerEpoch: m.OwnerEpoch, Capabilities: append([]string(nil), t.Capabilities...)}
+	return target, checkPlanningOperation(ctx, tx, target.AttemptID, action)
+}
+
+// The frozen server-owned attempt snapshot, not a tool list supplied by an
+// adapter, decides whether a planning task may request an external operation.
+func checkPlanningOperation(ctx context.Context, tx pgx.Tx, attemptID int64, action string) error {
+	if action != executionaccess.ActionPublish {
+		return nil
+	}
+	var purpose string
+	if err := tx.QueryRow(ctx, `SELECT COALESCE(resolved_execution_snapshot_json->>'stagePurpose','') FROM workforce_task_attempts WHERE id=$1`, attemptID).Scan(&purpose); err != nil {
+		return err
+	}
+	if purpose == "PLAN" {
+		return executionaccessdomain.ErrActionNotAllowed
+	}
+	return nil
 }
 
 func (a *executionAccessAuthority) validateColdResume(ctx context.Context, tx pgx.Tx, m executionaccess.Machine) (executionaccess.Target, error) {

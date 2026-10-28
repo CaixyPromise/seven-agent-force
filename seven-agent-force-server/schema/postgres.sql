@@ -4733,6 +4733,7 @@ CREATE TABLE "public"."workforce_tasks" (
     "scenario_version" integer,
     "scenario_digest" character varying(64),
     "external_correlation_id" character varying(256),
+    "work_item_input_json" "jsonb",
     CONSTRAINT "workforce_tasks_execution_active_milliseconds_ck" CHECK (("execution_active_milliseconds" >= 0)),
     CONSTRAINT "workforce_tasks_execution_requirements_ck" CHECK (("jsonb_typeof"("execution_requirements_json") = 'object'::"text")),
     CONSTRAINT "workforce_tasks_execution_requirements_digest_ck" CHECK ((("execution_requirements_digest")::"text" ~ '^[0-9a-f]{64}$'::"text")),
@@ -4743,7 +4744,8 @@ CREATE TABLE "public"."workforce_tasks" (
     CONSTRAINT "workforce_tasks_quality_outcome_ck" CHECK ((("quality_outcome")::"text" = ANY (ARRAY[''::"text", 'INDEPENDENT_REVIEW_PASSED'::"text", 'HUMAN_ACCEPTED'::"text"]))),
     CONSTRAINT "workforce_tasks_result_processor_parameters_ck" CHECK (("jsonb_typeof"("result_processor_parameters_json") = 'object'::"text")),
     CONSTRAINT "workforce_tasks_result_processor_release_id_ck" CHECK (("result_processor_release_id" > 0)),
-    CONSTRAINT "workforce_tasks_selected_runtime_release_id_ck" CHECK ((("selected_runtime_release_id" IS NULL) OR ("selected_runtime_release_id" > 0)))
+    CONSTRAINT "workforce_tasks_selected_runtime_release_id_ck" CHECK ((("selected_runtime_release_id" IS NULL) OR ("selected_runtime_release_id" > 0))),
+    CONSTRAINT "workforce_tasks_work_item_input_ck" CHECK ((("work_item_input_json" IS NULL) OR (("jsonb_typeof"("work_item_input_json") = 'object'::"text") AND ("octet_length"(("work_item_input_json")::"text") <= 262144))))
 );
 
 
@@ -4782,6 +4784,105 @@ CREATE TABLE "public"."workforce_webhook_delivery_attempts" (
     "failure_class" character varying(128) DEFAULT ''::character varying NOT NULL,
     "duration_millis" integer DEFAULT 0 NOT NULL,
     "attempted_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+
+CREATE TABLE "public"."workforce_work_item_decisions" (
+    "id" bigint NOT NULL,
+    "tenant_id" bigint NOT NULL,
+    "work_item_id" bigint NOT NULL,
+    "actor_principal_id" bigint NOT NULL,
+    "decision_kind" character varying(32) NOT NULL,
+    "plan_revision_id" bigint,
+    "plan_content_digest" character varying(64),
+    "scope_key" character varying(32) NOT NULL,
+    "request_key" character varying(128) NOT NULL,
+    "request_digest" character varying(64) NOT NULL,
+    "response_json" "jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+
+CREATE TABLE "public"."workforce_work_item_events" (
+    "id" bigint NOT NULL,
+    "tenant_id" bigint NOT NULL,
+    "work_item_id" bigint NOT NULL,
+    "kind" character varying(64) NOT NULL,
+    "data_json" "jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+
+CREATE TABLE "public"."workforce_work_item_plan_revisions" (
+    "id" bigint NOT NULL,
+    "tenant_id" bigint NOT NULL,
+    "work_item_id" bigint NOT NULL,
+    "revision" integer NOT NULL,
+    "source_task_id" bigint NOT NULL,
+    "source_output_id" bigint NOT NULL,
+    "content_digest" character varying(64) NOT NULL,
+    "data_json" "jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT "workforce_work_item_plan_revisions_content_digest_check" CHECK ((("content_digest")::"text" ~ '^[0-9a-f]{64}$'::"text")),
+    CONSTRAINT "workforce_work_item_plan_revisions_revision_check" CHECK (("revision" > 0))
+);
+
+
+
+CREATE TABLE "public"."workforce_work_item_stage_runs" (
+    "id" bigint NOT NULL,
+    "tenant_id" bigint NOT NULL,
+    "work_item_id" bigint NOT NULL,
+    "stage_key" character varying(16) NOT NULL,
+    "run_number" integer NOT NULL,
+    "task_id" bigint NOT NULL,
+    "status" character varying(32) NOT NULL,
+    "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT "workforce_work_item_stage_runs_run_number_check" CHECK (("run_number" > 0)),
+    CONSTRAINT "workforce_work_item_stage_runs_stage_key_check" CHECK ((("stage_key")::"text" = ANY ((ARRAY['PLAN'::character varying, 'IMPLEMENT'::character varying])::"text"[])))
+);
+
+
+
+CREATE TABLE "public"."workforce_work_item_stages" (
+    "id" bigint NOT NULL,
+    "tenant_id" bigint NOT NULL,
+    "work_item_id" bigint NOT NULL,
+    "stage_key" character varying(16) NOT NULL,
+    "position" integer NOT NULL,
+    "status" character varying(32) NOT NULL,
+    "current_run_id" bigint,
+    CONSTRAINT "workforce_work_item_stages_stage_key_check" CHECK ((("stage_key")::"text" = ANY ((ARRAY['PLAN'::character varying, 'IMPLEMENT'::character varying])::"text"[])))
+);
+
+
+
+CREATE TABLE "public"."workforce_work_item_usage_snapshots" (
+    "work_item_id" bigint NOT NULL,
+    "tenant_id" bigint NOT NULL,
+    "usage_json" "jsonb" NOT NULL,
+    "observed_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+
+
+CREATE TABLE "public"."workforce_work_items" (
+    "id" bigint NOT NULL,
+    "tenant_id" bigint NOT NULL,
+    "project_id" bigint NOT NULL,
+    "project_version_id" bigint NOT NULL,
+    "created_by_principal_id" bigint NOT NULL,
+    "status" character varying(32) NOT NULL,
+    "version" integer NOT NULL,
+    "data_json" "jsonb" NOT NULL,
+    "request_json" "jsonb" NOT NULL,
+    "created_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT "workforce_work_items_status_check" CHECK ((("status")::"text" = ANY ((ARRAY['PLANNING'::character varying, 'AWAITING_PLAN_APPROVAL'::character varying, 'IMPLEMENTING'::character varying, 'NEEDS_ATTENTION'::character varying, 'SUCCEEDED'::character varying, 'CANCELLING'::character varying, 'CANCELLED'::character varying])::"text"[]))),
+    CONSTRAINT "workforce_work_items_version_check" CHECK (("version" > 0))
 );
 
 
@@ -6333,6 +6434,66 @@ ALTER TABLE ONLY "public"."workforce_webhook_delivery_attempts"
 
 ALTER TABLE ONLY "public"."workforce_webhook_delivery_attempts"
     ADD CONSTRAINT "workforce_webhook_delivery_attempts_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_decisions"
+    ADD CONSTRAINT "workforce_work_item_decisions_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_decisions"
+    ADD CONSTRAINT "workforce_work_item_decisions_tenant_id_actor_principal_id__key" UNIQUE ("tenant_id", "actor_principal_id", "scope_key", "request_key");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_events"
+    ADD CONSTRAINT "workforce_work_item_events_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_plan_revisions"
+    ADD CONSTRAINT "workforce_work_item_plan_revisions_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_plan_revisions"
+    ADD CONSTRAINT "workforce_work_item_plan_revisions_work_item_id_revision_key" UNIQUE ("work_item_id", "revision");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_stage_runs"
+    ADD CONSTRAINT "workforce_work_item_stage_run_work_item_id_stage_key_run_nu_key" UNIQUE ("work_item_id", "stage_key", "run_number");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_stage_runs"
+    ADD CONSTRAINT "workforce_work_item_stage_runs_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_stage_runs"
+    ADD CONSTRAINT "workforce_work_item_stage_runs_task_id_key" UNIQUE ("task_id");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_stages"
+    ADD CONSTRAINT "workforce_work_item_stages_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_stages"
+    ADD CONSTRAINT "workforce_work_item_stages_work_item_id_stage_key_key" UNIQUE ("work_item_id", "stage_key");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_item_usage_snapshots"
+    ADD CONSTRAINT "workforce_work_item_usage_snapshots_pkey" PRIMARY KEY ("work_item_id");
+
+
+
+ALTER TABLE ONLY "public"."workforce_work_items"
+    ADD CONSTRAINT "workforce_work_items_pkey" PRIMARY KEY ("id");
 
 
 
@@ -7974,6 +8135,22 @@ CREATE UNIQUE INDEX "workforce_verified_materialization_upload_idx" ON "public".
 
 
 CREATE UNIQUE INDEX "workforce_verified_upload_identity_idx" ON "public"."workforce_artifact_upload_attempts" USING "btree" ("finalization_run_id", "artifact_type", "sha256") WHERE (("status")::"text" = 'VERIFIED'::"text");
+
+
+
+CREATE INDEX "workforce_work_item_events_stream_idx" ON "public"."workforce_work_item_events" USING "btree" ("tenant_id", "work_item_id", "id");
+
+
+
+CREATE UNIQUE INDEX "workforce_work_item_one_plan_approval_idx" ON "public"."workforce_work_item_decisions" USING "btree" ("work_item_id", "plan_revision_id") WHERE (("decision_kind")::"text" = 'APPROVE_PLAN'::"text");
+
+
+
+CREATE INDEX "workforce_work_items_active_idx" ON "public"."workforce_work_items" USING "btree" ("updated_at", "id") WHERE (("status")::"text" = ANY ((ARRAY['PLANNING'::character varying, 'IMPLEMENTING'::character varying, 'CANCELLING'::character varying, 'AWAITING_PLAN_APPROVAL'::character varying])::"text"[]));
+
+
+
+CREATE INDEX "workforce_work_items_project_idx" ON "public"."workforce_work_items" USING "btree" ("tenant_id", "project_id", "id" DESC);
 
 
 
